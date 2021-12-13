@@ -133,7 +133,7 @@ type User struct {
   IdentityCardNumber string `json:"idcardnumber"`
   IdentityCardType string `json:"idtype" gorm:"default:EMPLOYEE_ID"`
   Nationality string `json:"nationality"`
-  AccessRights uint32 `json:"accessRights"`
+  AccessRights uint  `json:"accessRights"`
   Messages []Message `json:"messages" gorm:"foreignKey:UserID;references:id"`
   Notifications []Notification `json:"notifications" gorm:"foreignKey:UserID;references:id"`
   UserActions []UserAction `json:"userActions" gorm:"foreignKey:UserID;references:id"`

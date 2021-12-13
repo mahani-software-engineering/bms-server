@@ -9,7 +9,6 @@ import (
 	"io/fs"
 	"strings"
 	"net/http"
-	"gorm.io/gorm"
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/mahani-software-engineering/bms-server/db"
@@ -18,8 +17,6 @@ import (
 
 //go:embed client/web/*
 var static embed.FS
-
-var database *gorm.DB
 
 func htmlWebsite(w http.ResponseWriter, r *http.Request) {
 	website, _ := fs.Sub(static, "client")
@@ -122,7 +119,7 @@ func main() {
     addr := flag.String("addr", wsEndPoint, "AFENET API service address") 
     flag.Parse()
     //++++++++++++++++++++
-    database, _ = db.Connect()
+    db.Init()
     
     fmt.Println("Server listening on port: "+(strings.Split(wsEndPoint,":")[1])) 
     log.Fatal(http.ListenAndServe(*addr, getRouter()))
