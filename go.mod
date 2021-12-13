@@ -1,4 +1,4 @@
-module github.com/bms/bms-server
+module github.com/mahani-software-engineering/bms-server
 
 go 1.17
 

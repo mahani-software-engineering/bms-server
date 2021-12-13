@@ -12,8 +12,8 @@ import (
 	"gorm.io/gorm"
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/bms/bms-server/db"
-	uc "github.com/bms/bms-server/usecases"
+	"github.com/mahani-software-engineering/bms-server/db"
+	uc "github.com/mahani-software-engineering/bms-server/usecases"
 )
 
 //go:embed client/web/*
