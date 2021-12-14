@@ -40,6 +40,7 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/user/rights/{id}", uc.AssignUserRights).Methods("PUT")
 	router.HandleFunc("/user/read/{id}", uc.ReadUser).Methods("GET")
 	router.HandleFunc("/user/read", uc.ReadAllUsers).Methods("GET")
+	//router.Path("/user/read").Queries("skip", "{skip}").HandlerFunc(uc.ReadAllUsers).Name("pagenation").Methods("GET")
 	//Product
 	router.HandleFunc("/product", uc.CreateProduct).Methods("POST")
 	router.HandleFunc("/product/{id}", uc.UpdateProduct).Methods("PUT")
@@ -75,9 +76,11 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/payment/{id}", uc.ReadPayment).Methods("GET")
 	router.HandleFunc("/payment", uc.ReadAllPayments).Methods("GET")
 	//Invoice
+	router.HandleFunc("/invoice/{id}", uc.CreateInvoice).Methods("POST")
 	router.HandleFunc("/invoice/{id}", uc.ReadInvoice).Methods("GET")
 	router.HandleFunc("/invoice", uc.ReadAllInvoices).Methods("GET")
 	//Bill
+	router.HandleFunc("/bill/{id}", uc.CreateBill).Methods("POST")
 	router.HandleFunc("/bill/{id}", uc.ReadBill).Methods("GET")
 	router.HandleFunc("/bill", uc.ReadAllBills).Methods("GET")
 	//StockTransaction

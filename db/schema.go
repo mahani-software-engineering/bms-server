@@ -66,36 +66,40 @@ type OrderOrBooking struct {
   VisitID    uint     `json:"visitid"`
   InvoiceID  uint     `json:"invoiceid"`
   BillID     uint     `json:"billid"`
-}
-
-type Payment struct {
-  gorm.Model
-  Amount     uint     `json:"amount"`
-  Item       string   `json:"item" gorm:"size:8"`              //product, service, package, invoice, bill
-  ItemID     uint     `json:"itemid"`
-  Instalment bool     `json:"instalment" gorm:"default:false"` //true/false
-  Customer   User     `json:"customer" gorm:"foreignKey:CustomerID;references:id"`
-  CustomerID uint     `json:"customerid"`
+  CreatedBy  uint     `json:"createdby"`                    //id of the user who created a record
 }
 
 type Invoice struct {
   gorm.Model
   Amount     uint             `json:"amount"`
-  Status     string           `json:"status" gorm:"size:20"` //pending, billed, paid, cancelled
+  Status     string           `json:"status" gorm:"size:20;default:pending"` //pending, billed, paid, cancelled
   Customer   User             `json:"customer" gorm:"foreignKey:CustomerID;references:id"`
   CustomerID uint             `json:"customerid"`
-  BillID     uint     `json:"billid"`
+  BillID     uint             `json:"billid"`
+  CreatedBy  uint     `json:"createdby"`                                     //id of the user who created a record
   Orders     []OrderOrBooking `json:"orders"`
 }
 
 type Bill struct {
   gorm.Model
   Amount     uint             `json:"amount"`
-  Status     string           `json:"status" gorm:"size:20"` //pending, paid, cancelled
+  Status     string           `json:"status" gorm:"size:20"`                 //pending, paid, cancelled
   Customer   User             `json:"customer" gorm:"foreignKey:CustomerID;references:id"`
   CustomerID uint             `json:"customerid"`
+  Invoices   string           `json:"invoices" gorm:"size:200;default:none"` //list of comma-separated, stringified invoice IDs 
+  CreatedBy  uint     `json:"createdby"`                                     //id of the user who created a record
   Orders     []OrderOrBooking `json:"orders"`
-  Invoices   []Invoice        `json:"invoices"`
+}
+
+type Payment struct {
+  gorm.Model
+  Amount     uint     `json:"amount"`
+  Item       string   `json:"item" gorm:"size:8"`              //order, booking, invoice, bill
+  ItemID     uint     `json:"itemid"`
+  Instalment bool     `json:"instalment" gorm:"default:false"` //true/false
+  Customer   User     `json:"customer" gorm:"foreignKey:CustomerID;references:id"`
+  CustomerID uint     `json:"customerid"`
+  CreatedBy  uint     `json:"createdby"`                       //id of the user who created a record
 }
 
 type StockTransaction struct {
@@ -103,7 +107,7 @@ type StockTransaction struct {
   Transasction  string  `json:"transasction" gorm:"size:8"` //add, remove,
   Product       Product `json:"product"`
   OldQuantity   uint    `json:"oldQuantity"`
-  Quantity      uint     `json:"quantity"`
+  Quantity      uint    `json:"quantity"`
   NewQuantity   uint    `json:"newQuantity"`
   Returned      bool    `json:"returned" gorm:"default:false"` //true/false
   Staff         User    `json:"staff"`
@@ -134,6 +138,8 @@ type User struct {
   IdentityCardType string `json:"idtype" gorm:"default:EMPLOYEE_ID"`
   Nationality string `json:"nationality"`
   AccessRights uint  `json:"accessRights"`
+  Invoices []Invoice `json:"invoices" gorm:"foreignKey:CustomerID;references:id"`
+  Bills []Bill `json:"bills" gorm:"foreignKey:CustomerID;references:id"`
   Messages []Message `json:"messages" gorm:"foreignKey:UserID;references:id"`
   Notifications []Notification `json:"notifications" gorm:"foreignKey:UserID;references:id"`
   UserActions []UserAction `json:"userActions" gorm:"foreignKey:UserID;references:id"`
@@ -172,6 +178,13 @@ NOTE: 1. an invoice added to the "invoices []" list in the bill must
       3. Auto create (on request) a Bill with all orders made by the 
          specified customer, have status="served" and paid=false.
          Consider any instalment payments
+         
+      4. does the customer exist ?
+            YES: get his ID and use
+            NO : 
+                has he proivided any sufficient info to create a customer account?
+                YES: create the entity requested for, and auto create the customer and visit
+                NO : Only create a visit and the order entity 
 */ 
   
   

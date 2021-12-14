@@ -2,9 +2,11 @@ package usecases
 
 
 import (
-	"github.com/mahani-software-engineering/bms-server/db"
-  )
-	
+    "net/http"
+    "encoding/json"
+    "github.com/mahani-software-engineering/bms-server/db"
+)
+
 func newActionRecord(uid uint, an, descr, entity, option string) {
     var action db.UserAction
     action.ActionNumber = an
@@ -16,4 +18,10 @@ func newActionRecord(uid uint, an, descr, entity, option string) {
 }
 
 
+func ReadUserAction(w http.ResponseWriter, r *http.Request) {
 
+}
+
+func ReadAllUserActions(w http.ResponseWriter, r *http.Request) {
+
+}

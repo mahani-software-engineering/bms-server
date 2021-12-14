@@ -60,7 +60,38 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
     }
 }
 
+func userExists (identifier string) (bool, db.User, error) {
+    //the identifier can be ID, phone, email, username
+    user := db.User
+    response := database.Where("id = ? OR phone = ? OR email = ? OR username = ?", identifier, identifier, identifier, identifier).First(&user)                   
+    numberOfRowsFound := response.RowsAffected
+    userExists := numberOfRowsFound > 0
+    return userExists, user, response.Error
+}
 
+func ReadUser(w http.ResponseWriter, r *http.Request) {
+    params := mux.Vars(r)
+    identf := params["id"]
+    //ensure that the identifier is converted to string if it's not one
+    identifier = fmt.Sprintf("%s", identf)
+    ok, user, err := userExists(identifier)
+    if err != nil {
+        //set error code
+        //respond to client with "Server error! Please try again"
+    }
+    
+    if !ok {
+        //set error code for record not found error
+        //respond with record not found error
+    }
+    
+    //set error code 200 OK
+    //respond with user data
+}
+
+func ReadAllUsers(w http.ResponseWriter, r *http.Request) {
+
+}
 
 
 
