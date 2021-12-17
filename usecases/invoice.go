@@ -20,7 +20,7 @@ func CreateInvoice(w http.ResponseWriter, r *http.Request) {
                 //create a new invoice, auto create orders[], don't auto create user
                 //ensure the new orders' "status" fields are set to "invoiced"
                 //respond to client
-            }
+            //}
         //}esle {
             //if (user has made orders within this request sent ) {
                 //create a fresh instance of the invoice entity, auto creare the new (additional) orders, get the new ID
@@ -96,7 +96,8 @@ func ReadAllInvoices(w http.ResponseWriter, r *http.Request) {
     numberOfRowsFound := response.RowsAffected
     exists := numberOfRowsFound > 0
     fmt.Println(numberOfRowsFound, "invoices exist =", exists)
-    json.NewEncoder(w).Encode(invoices)
+    msg := fmt.Sprintf("Found %s records", numberOfRowsFound)
+    respondToClient(w, 200, invoices, msg)
 }
 
 

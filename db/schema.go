@@ -6,21 +6,23 @@ import (
 
 type Service struct {
   gorm.Model
-  Name             string  `json:"name" gorm:"size:200"`
-  Category         string  `json:"category" gorm:"size:40"`
-  Availability     bool    `json:"availability" gorm:"default:true"`
-  Price            uint    `json:"price"`
+  Name               string  `json:"name" gorm:"size:200"`
+  Category           string  `json:"category" gorm:"size:40"`
+  Availability       bool    `json:"availability" gorm:"default:true"`
+  Price              uint    `json:"price"`
+  ServiceProviderID  uint    `json:"serviceproviderid"`
 }
 
 type Product struct {
   gorm.Model
   Name             string  `json:"name" gorm:"size:150"`
-  Category         string  `json:"category" gorm:"size:40"`      //cocacola
+  Category         string  `json:"category" gorm:"size:40"`      //soda
   Brand            string  `json:"brand" gorm:"size:20"`         //fanta, crest, etc
-  Type             string  `json:"type" gorm:"size:20"`          //plastic, bittled, etc
+  Type             string  `json:"type" gorm:"size:20"`          //plastic, bottled, etc
   Price            uint    `json:"price"`                        //4000
-  QuantityInStock  uint    `json:"quantityInStock"`              //450
+  Quantity         uint    `json:"quantity"`                     //450
   QuantityUnits    string  `json:"quantityUnits" gorm:"size:20"` //crates
+  SupplierID       uint    `json:"supplierid"`
 }  
 
 type PackageProduct struct {
@@ -57,7 +59,7 @@ type OrderOrBooking struct {
   gorm.Model
   Item       string   `json:"item" gorm:"size:8"`           //product, service, package
   ItemID     uint     `json:"itemid"`
-  Qauntity   uint     `json:"qauntity"`
+  Quantity   uint     `json:"quantity"`
   Status     string   `json:"status" gorm:"size:20"`        //pending, invoiced, served, billed, cancelled
   Paid       bool     `json:"paid" gorm:"default:false"`    //true/false
   Customer   User     `json:"customer" gorm:"foreignKey:CustomerID;references:id"`
@@ -83,12 +85,12 @@ type Invoice struct {
 type Bill struct {
   gorm.Model
   Amount     uint             `json:"amount"`
-  Status     string           `json:"status" gorm:"size:20"`                 //pending, paid, cancelled
+  Status     string           `json:"status" gorm:"size:20;default:pending"` //pending, paid, cancelled
   Customer   User             `json:"customer" gorm:"foreignKey:CustomerID;references:id"`
   CustomerID uint             `json:"customerid"`
   Invoices   string           `json:"invoices" gorm:"size:200;default:none"` //list of comma-separated, stringified invoice IDs 
-  CreatedBy  uint     `json:"createdby"`                                     //id of the user who created a record
-  Orders     []OrderOrBooking `json:"orders"`
+  CreatedBy  uint             `json:"createdby"`                             //id of the user who created a record
+  Orders     []OrderOrBooking `json:"orders"`   
 }
 
 type Payment struct {
@@ -104,87 +106,84 @@ type Payment struct {
 
 type StockTransaction struct {
   gorm.Model
-  Transasction  string  `json:"transasction" gorm:"size:8"` //add, remove,
-  Product       Product `json:"product"`
-  OldQuantity   uint    `json:"oldQuantity"`
-  Quantity      uint    `json:"quantity"`
-  NewQuantity   uint    `json:"newQuantity"`
-  Returned      bool    `json:"returned" gorm:"default:false"` //true/false
-  Staff         User    `json:"staff"`
-  UserID        uint    `json:"userid"`
+  Transaction      string  `json:"transaction" gorm:"size:8"`        //add, remove,
+  ProductCategory   string  `json:"productCategory" gorm:"size:150"`   //
+  ProductID         uint    `json:"productid"`
+  OldQuantity       uint    `json:"oldQuantity"`
+  Quantity          uint    `json:"quantity"`
+  NewQuantity       uint    `json:"newQuantity"`
+  Returned          bool    `json:"returned" gorm:"default:false"`     //true/false
+  CreatedBy         uint    `json:"createdby"`
 }
 
 type Expense struct {
   gorm.Model
   Amount        uint    `json:"amount"`
-  SpentOn       string  `json:"spenton"`
+  SpentOn       string  `json:"spenton"`     //stock, petty-cash, regular, ...
   Description   string  `json:"description"`
-  Staff         User    `json:"staff" gorm:"foreignKey:StaffID;references:id"`
-  StaffID       uint    `json:"staffid"`
+  CreatedBy     uint    `json:"createdby"`
 }
 
 type User struct {
   gorm.Model
-  Username string `json:"username" gorm:"size:20"`
-  Password string `json:"pxwd" gorm:"size:150"`
-  Firstname  string  `json:"firstname" gorm:"size:20"`
-  Lastname string  `json:"lastname" gorm:"size:20"`
-  Phone string `json:"phone" gorm:"size:20"`
-  Email string `json:"email" gorm:"size:100"`
-  Address string `json:"address" gorm:"size:60"`
-  UserType string `json:"userType" gorm:"default:customer;size:20"` //staff, customer, guest, partner, service_provider, supplier...
-  StaffTitle string `json:"stafftitle"`
-  IdentityCardNumber string `json:"idcardnumber"`
-  IdentityCardType string `json:"idtype" gorm:"default:EMPLOYEE_ID"`
-  Nationality string `json:"nationality"`
-  AccessRights uint  `json:"accessRights"`
-  Invoices []Invoice `json:"invoices" gorm:"foreignKey:CustomerID;references:id"`
-  Bills []Bill `json:"bills" gorm:"foreignKey:CustomerID;references:id"`
-  Messages []Message `json:"messages" gorm:"foreignKey:UserID;references:id"`
-  Notifications []Notification `json:"notifications" gorm:"foreignKey:UserID;references:id"`
-  UserActions []UserAction `json:"userActions" gorm:"foreignKey:UserID;references:id"`
+  Username           string         `json:"username" gorm:"size:20"`
+  Password           string         `json:"pxwd" gorm:"size:150"`
+  Firstname          string         `json:"firstname" gorm:"size:20"`
+  Lastname           string         `json:"lastname" gorm:"size:20"`
+  Phone              string         `json:"phone" gorm:"size:20"`
+  Email              string         `json:"email" gorm:"size:100"`
+  Address            string         `json:"address" gorm:"size:60"`
+  UserType           string         `json:"userType" gorm:"default:customer;size:20"` //staff, customer, guest, partner, service_provider, supplier...
+  StaffTitle         string         `json:"stafftitle" gorm:"size:20"`
+  IdentityCardNumber string         `json:"idcardnumber" gorm:"size:20"`
+  IdentityCardType   string         `json:"idtype" gorm:"default:EMPLOYEE_ID" gorm:"size:20"`
+  Nationality        string         `json:"nationality" gorm:"size:50"`
+  AccessRights       uint           `json:"accessRights"`
+  Invoices           []Invoice      `json:"invoices" gorm:"foreignKey:CustomerID;references:id;->"`
+  Bills              []Bill         `json:"bills" gorm:"foreignKey:CustomerID;references:id;->"`
+  Messages           []Message      `json:"messages" gorm:"foreignKey:UserID;references:id;->"`
+  Notifications      []Notification `json:"notifications" gorm:"foreignKey:UserID;references:id;->"`
+  UserActions        []UserAction   `json:"userActions" gorm:"foreignKey:UserID;references:id;->"`
 }
 
 type UserAction struct {
   gorm.Model
-  ActionNumber string `json:"actionNumber"`
-  UserID uint `json:"userid"`
-  Description string `json:"description"`
-  OnEntity string `json:"onEntity"`
-  SpecificEntity string `json:"specificEntity"`
+  ActionNumber   string  `json:"actionNumber" gorm:"size:8"`
+  UserID         uint    `json:"userid"`
+  Description    string  `json:"description" gorm:"size:100"`
+  OnEntity       string  `json:"onEntity" gorm:"size:20"`
+  SpecificEntity string  `json:"specificEntity" gorm:"size:100"`
 }
 
 type Message struct {
   gorm.Model
-  Text string
-  Read bool
-  UserID uint
+  Text       string
+  Read       bool
+  UserID     uint
 }
 
 type Notification struct {
   gorm.Model
-  Message string
-  Read bool
-  UserID uint
+  Message    string
+  Read       bool
+  UserID     uint
 }
 
 
 /*
-NOTE: 1. an invoice added to the "invoices []" list in the bill must 
-         be one whose "orders []" ALL have status "served" and paid=true
-      2. Auto create (on request) an invoice with all orders made by the 
-         specified customer, have status="pending" and paid=false.
-         Consider any instalment payments
-      3. Auto create (on request) a Bill with all orders made by the 
-         specified customer, have status="served" and paid=false.
-         Consider any instalment payments
-         
-      4. does the customer exist ?
-            YES: get his ID and use
-            NO : 
-                has he proivided any sufficient info to create a customer account?
-                YES: create the entity requested for, and auto create the customer and visit
-                NO : Only create a visit and the order entity 
+Ref: https://gorm.io/docs/models.html
+NOTE ignored fields won’t be created when using GORM Migrator to create table
+
+type User struct {
+  Name string `gorm:"<-:create"` // allow read and create
+  Name string `gorm:"<-:update"` // allow read and update
+  Name string `gorm:"<-"`        // allow read and write (create and update)
+  Name string `gorm:"<-:false"`  // allow read, disable write permission
+  Name string `gorm:"->"`        // readonly (disable write permission unless it configured )
+  Name string `gorm:"->;<-:create"` // allow read and create
+  Name string `gorm:"->:false;<-:create"` // createonly (disabled read from db)
+  Name string `gorm:"-"`  // ignore this field when write and read with struct
+}
 */ 
   
   

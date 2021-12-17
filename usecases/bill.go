@@ -27,7 +27,7 @@ func CreateBill(w http.ResponseWriter, r *http.Request) {
                 //create a new bill, auto create orders[], don't auto create user
                 //ensure the new orders' "status" fields are set to "billed"
                 //respond to client
-            }
+            //}
         //}esle {
             //if (user has made orders within this request sent ) {
                 //create a fresh instance of the bill entity, auto creare the new (additional) orders, get the new ID
@@ -105,7 +105,8 @@ func ReadAllBills(w http.ResponseWriter, r *http.Request) {
     numberOfRowsFound := response.RowsAffected
     exists := numberOfRowsFound > 0
     fmt.Println(numberOfRowsFound, "bills exist =", exists)
-    json.NewEncoder(w).Encode(bills)
+    msg := fmt.Sprintf("Found %s records", numberOfRowsFound)
+    respondToClient(w, 200, bills, msg)
 }
 
 

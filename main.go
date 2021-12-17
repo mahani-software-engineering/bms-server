@@ -70,8 +70,14 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/booking/{id}", uc.ReadOrderOrBooking).Methods("GET")
 	router.HandleFunc("/order", uc.ReadAllOrdersOrBookings).Methods("GET")
 	router.HandleFunc("/booking", uc.ReadAllOrdersOrBookings).Methods("GET")
+	router.HandleFunc("/order/bycusomer/{id}", uc.ReadOrdersByCustomer).Methods("GET")
+	router.HandleFunc("/booking/bycusomer/{id}", uc.ReadOrdersByCustomer).Methods("GET")
+	router.HandleFunc("/order/byinvoice/{id}", uc.ReadOrdersByInvoice).Methods("GET")
+	router.HandleFunc("/booking/byinvoice/{id}", uc.ReadOrdersByInvoice).Methods("GET")
+	router.HandleFunc("/order/bybill/{id}", uc.ReadOrdersByBill).Methods("GET")
+	router.HandleFunc("/booking/bybill/{id}", uc.ReadOrdersByBill).Methods("GET")
 	//Payment
-	router.HandleFunc("/payment", uc.CreatePayment).Methods("POST")
+	router.HandleFunc("/payment/{id:[5,6,7,9,13,14,15,17,18,19,21,22,23]}", uc.CreatePayment).Methods("POST")
 	router.HandleFunc("/payment/{id}", uc.UpdatePayment).Methods("PUT")
 	router.HandleFunc("/payment/{id}", uc.ReadPayment).Methods("GET")
 	router.HandleFunc("/payment", uc.ReadAllPayments).Methods("GET")
@@ -118,7 +124,7 @@ func getRouter() *mux.Router {
 
 func main() {
     //++++| os.Args |+++++
-    wsEndPoint := ":4400" 
+    wsEndPoint := ":5500" 
     addr := flag.String("addr", wsEndPoint, "AFENET API service address") 
     flag.Parse()
     //++++++++++++++++++++
