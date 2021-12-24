@@ -2,8 +2,12 @@ package usecases
 
 
 import (
+    "fmt"
+    "errors"
+    "strconv"
     "net/http"
     "encoding/json"
+    "github.com/gorilla/mux"
     "github.com/mahani-software-engineering/bms-server/db"
 )
 
@@ -32,31 +36,35 @@ func UpdateOrderOrBooking(w http.ResponseWriter, r *http.Request) {
 
 func orderExists (identifier string) (bool, db.OrderOrBooking, error) {
     //the identifier must be ID
-    order := db.OrderOrBooking
-    response := database.Where("id = ?", identifier).First(&order)                   
-    numberOfRowsFound := response.RowsAffected
-    exists := numberOfRowsFound > 0
-    return exists, order, response.Error
+    var order db.OrderOrBooking
+    if id, err := strconv.Atoi(identifier); err == nil {
+        response := database.Where("id = ?", uint(id)).First(&order)
+        numberOfRowsFound := response.RowsAffected
+        exists := numberOfRowsFound > 0
+        return exists, order, response.Error
+    }else{
+        return false, order, errors.New("order id must be a number")
+    } 
 }
 
 func ReadOrderOrBooking(w http.ResponseWriter, r *http.Request) {
-    readOne(w, r, orderExists)
+    //readOne(w, r, orderExists)
 }
 
-func ReadAllOrderOrBookings(w http.ResponseWriter, r *http.Request) {
-    orders := []db.OrderOrBooking
+func ReadAllOrdersOrBookings(w http.ResponseWriter, r *http.Request) {
+    var orders []db.OrderOrBooking
     response := database.Find(&orders)
     numberOfRowsFound := response.RowsAffected
     exists := numberOfRowsFound > 0
     fmt.Println(numberOfRowsFound, "orders exist =", exists)
-    msg := fmt.Sprintf("Found %s records", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
     respondToClient(w, 200, orders, msg)
 }
 
 func ReadOrdersByCustomer(w http.ResponseWriter, r *http.Request) {
     params := mux.Vars(r)
     customerPhone := params["id"]
-    ok, custmr, err := userExists(pmt.Customer.Phone)
+    ok, custmr, err := userExists(customerPhone)
     if err != nil {
         fmt.Println("Customer is not registered.")
     }
@@ -66,33 +74,44 @@ func ReadOrdersByCustomer(w http.ResponseWriter, r *http.Request) {
         respondToClient(w, 404, nil, msg)
     }
     
-    orders := []db.OrderOrBooking
+    var orders []db.OrderOrBooking
     response := database.Where("customer_id = ?", custmr.ID).Find(&orders)
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %s records", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
     respondToClient(w, 200, orders, msg)
 }
 
 func ReadOrdersByInvoice(w http.ResponseWriter, r *http.Request) {
     params := mux.Vars(r)
     invoiceId := params["id"]
-    orders := []db.OrderOrBooking
+    var orders []db.OrderOrBooking
     response := database.Where("invoice_id = ?", invoiceId).Find(&orders)
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %s records", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
     respondToClient(w, 200, orders, msg)
 }
 
 func ReadOrdersByBill(w http.ResponseWriter, r *http.Request) {
     params := mux.Vars(r)
     billId := params["id"]
-    orders := []db.OrderOrBooking
+    var orders []db.OrderOrBooking
     response := database.Where("bill_id = ?", billId).Find(&orders)
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %s records", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
     respondToClient(w, 200, orders, msg)
 }
 
+func ReadCountOrdersOrBookings(w http.ResponseWriter, r *http.Request) {
+    fmt.Println("orders count ...")
+    params := mux.Vars(r)
+    billId := params["id"]
+    var orders []db.OrderOrBooking
+    response := database.Where("bill_id = ?", billId).Find(&orders)
+    numberOfRowsFound := response.RowsAffected
+    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
+    fmt.Println("ReadCountOrdersOrBookings -> numberOfRowsFound=",numberOfRowsFound)
+    respondToClient(w, 200, numberOfRowsFound, msg)
+}
 
 
 

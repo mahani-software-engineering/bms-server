@@ -2,8 +2,10 @@ package usecases
 
 
 import (
+    "fmt"
     "net/http"
     "encoding/json"
+    "github.com/gorilla/mux"
     "github.com/mahani-software-engineering/bms-server/db"
 )
 
@@ -13,7 +15,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
     
     type ReceivedOrder struct {
         Item     string  `json:"item" gorm:"size:8"`
-        Itemid:  uint    `json:"itemid"`
+        ItemID   uint    `json:"itemid"`
         Quantity uint    `json:"quantity"`
         Status   string  `json:"status"`
     }
@@ -28,14 +30,20 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
         Order   ReceivedOrder   `json:"order"`
         Invoice ReceivedInvoice `json:"invoice"`
         Bill    ReceivedBill    `json:"bill"`
+        Amount     uint         `json:"amount"`
+        Item       string       `json:"item"`       //order, booking, invoice, bill
+        ItemID     uint         `json:"itemid"`
+        Instalment bool         `json:"instalment"` //true/false
+        Customer   db.User      `json:"customer"`
+        CustomerID uint         `json:"customerid"`
+        CreatedBy  uint         `json:"createdby"`
     }
-    switch(dcase){
-        case 5:
+    switch (dcase) {
+        case "5":
             //customer does not exist, no new customer info given, an order in the request, item=order
             var recvdPmt ReceivedPayment
             var pmt db.Payment
 	        _ = json.NewDecoder(r.Body).Decode(&recvdPmt)
-	        _ = json.NewDecoder(r.Body).Decode(&pmt)
 	        
 	        //create an order first
 	        orderNew := db.OrderOrBooking{
@@ -44,56 +52,63 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	            Quantity:  recvdPmt.Order.Quantity,
 	            Status:    recvdPmt.Order.Status,
 	            Paid:      true,
-	            Createdby: pmt.createdby,
+	            CreatedBy: recvdPmt.CreatedBy,
 	            //Customer: {}, //ignored on creation
 	        }
-	        database.Omit("Customer").Create(&orderNew)
+	        
+	        database.Omit("Customer","CustomerID","VisitID","InvoiceID","BillID").Create(&orderNew)
 	        //ID of the newly created order = orderNew.ID
-	        pmt.Itemid = orderNew.ID
-	        database.Omit("Customer").Create(&pmt)
+	        pmt.ItemID = orderNew.ID
+	        pmt.Item = recvdPmt.Item
+	        pmt.Amount = recvdPmt.Amount
+	        pmt.CreatedBy = recvdPmt.CreatedBy
+	        database.Omit("Customer","CustomerID").Create(&pmt)
 	        if recvdPmt.Order.Item == "product" && orderNew.Status == "served" {
 	            balanceStock(recvdPmt.Order.ItemID, "remove", recvdPmt.Order.Quantity)
 	        }
 	        //finished.
 	        
-	        specificActionDetails := fmt.Printf("Unregistered customer oredered and paid: %s", orderNew.Item)
-	        newActionRecord(pmt.createdby, "ACN0002/5", "Payment received, customer not registered, new customer info not given, customer ordered for an item, item=order ", specificActionDetails)     
+	        specificActionDetails := fmt.Sprintf("Unregistered customer oredered and paid: %s", orderNew.Item)
+	        newActionRecord(pmt.CreatedBy, "ACN0002/5", "Payment received, customer not registered, new customer info not given, customer ordered for an item, item=order ", "Payment",specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
-        case 6:
+        case "6":
             //customer does not exist, no new customer info given, an order in the request, item=invoice
             var recvdPmt ReceivedPayment
             var pmt db.Payment
 	        _ = json.NewDecoder(r.Body).Decode(&recvdPmt)
-	        _ = json.NewDecoder(r.Body).Decode(&pmt)
 	        
 	        //create an order first
 	        invoiceNew := db.Invoice{
-	            Amount:    pmt.Amount,
+	            Amount:    recvdPmt.Amount,
 	            Status:    "paid",
-	            Createdby: pmt.createdby,
+	            CreatedBy: recvdPmt.CreatedBy,
 	            Orders:    recvdPmt.Invoice.Orders,
 	            //Customer: {}, //ignored on creation
 	        }
-	        invoiceOrders := &invoiceNew.Orders
-            for _, order := range invoiceOrders {
+	        //invoiceOrders := &invoiceNew.Orders
+            for k, order := range invoiceNew.Orders {
                 order.Paid = true
-                order.Createdby = pmt.Createdby
-                if order.Item == "product" && orderNew.Status == "served" {
+                order.CreatedBy = recvdPmt.CreatedBy
+                invoiceNew.Orders[k] = order
+                if order.Item == "product" && order.Status == "served" {
 	                balanceStock(order.ItemID, "remove", order.Quantity)
 	            }
             }
-	        database.Omit("Customer").Omit("Orders.Customer").Create(&invoiceNew)
+	        database.Omit("Customer","CustomerID","Orders.Customer", "Orders.CustomerID","Orders.VisitID","Orders.BillID").Create(&invoiceNew)
 	        //ID of the newly created invoice = invoiceNew.ID
-	        pmt.Itemid = invoiceNew.ID
-	        database.Omit("Customer").Create(&pmt)
+	        pmt.ItemID = invoiceNew.ID
+	        pmt.Item   = recvdPmt.Item
+	        pmt.Amount = recvdPmt.Amount
+	        pmt.CreatedBy = recvdPmt.CreatedBy
+	        database.Omit("Customer","CustomerID").Create(&pmt)
 	        //finished.
 	        
-	        specificActionDetails := fmt.Printf("Unregistered customer oredered and paid: %s", invoiceNew.Item)
-	        newActionRecord(pmt.createdby, "ACN0002/6", "Payment received, customer not registered, new customer info not given, customer ordered for an item, item=invoice ", specificActionDetails)     
+	        specificActionDetails := fmt.Sprintf("Unregistered customer oredered and paid: %s", invoiceNew.ID)
+	        newActionRecord(pmt.CreatedBy, "ACN0002/6", "Payment received, customer not registered, new customer info not given, customer ordered for an item, item=invoice ", "Payment", specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
-        case 7:
+        case "7":
             //customer does not exist, no new customer info given, an order in the request, item=bill
             var recvdPmt ReceivedPayment
             var pmt db.Payment
@@ -102,50 +117,58 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	        
 	        //create an order first
 	        billNew := db.Bill{
-	            Amount:    pmt.Amount,
+	            Amount:    recvdPmt.Amount,
 	            Status:    "paid",
-	            Createdby: pmt.createdby,
+	            CreatedBy: recvdPmt.CreatedBy,
 	            Invoices:  recvdPmt.Bill.Invoices,
 	            Orders:    recvdPmt.Bill.Orders,
 	            //Customer: {}, //ignored on creation
 	        }
-	        billOrders := &billNew.Orders
-            for _, order := range billOrders {
+	        //billOrders := &billNew.Orders
+            for k, order := range billNew.Orders {
                 order.Status = "billed"
                 order.Paid = true
-                order.Createdby = pmt.Createdby
+                order.CreatedBy = recvdPmt.CreatedBy
+                billNew.Orders[k] = order
                 if order.Item == "product" {
 	                balanceStock(order.ItemID, "remove", order.Quantity)
 	            }
             }
-	        database.Omit("Customer").Omit("Orders.Customer").Create(&billNew)
+	        database.Omit("Customer","CustomerID","Orders.Customer","Orders.CustomerID","Orders.VisitID","Orders.InvoiceID").Create(&billNew)
 	        //ID of the newly created bill = billNew.ID
-	        pmt.Itemid = billNew.ID
-	        database.Omit("Customer").Create(&pmt)
+	        pmt.ItemID = billNew.ID
+	        pmt.Item   = recvdPmt.Item
+	        pmt.Amount = recvdPmt.Amount
+	        pmt.CreatedBy = recvdPmt.CreatedBy
+	        database.Omit("Customer","CustomerID").Create(&pmt)
 	        //finished.
 	        
-	        specificActionDetails := fmt.Printf("Unregistered customer oredered and paid: %s", billNew.Item)
-	        newActionRecord(pmt.createdby, "ACN0002/7", "Payment received, customer not registered, new customer info not given, customer ordered for an item, item=bill ", specificActionDetails)     
+	        specificActionDetails := fmt.Sprintf("Unregistered customer oredered and paid: %s", billNew.ID)
+	        newActionRecord(pmt.CreatedBy, "ACN0002/7", "Payment received, customer not registered, new customer info not given, customer ordered for an item, item=bill ", "Payment", specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
-        case 9:
+        case "8":
             //customer does not exist, new customer info given, no an order in the request, item=none
             var pmt db.Payment
 	        _ = json.NewDecoder(r.Body).Decode(&pmt)
-	        
-	        database.Create(&pmt)
-	        //finished.
-	        
-	        specificActionDetails := fmt.Printf("New customer registered and paid advance for future orders: payment ID = %s", pmt.ID)
-	        newActionRecord(pmt.createdby, "ACN0002/9", "Payment received, customer was not registered, new customer info given, no new order by customer", specificActionDetails)     
-	        respondToClient(w, 201, pmt, "Payment recorded successfully")
+	        if pmt.Amount > 0 {
+	            database.Create(&pmt)
+	            specificActionDetails := fmt.Sprintf("New customer registered and paid advance for future orders: payment ID = %s", pmt.ID)
+	            newActionRecord(pmt.CreatedBy, "ACN0002/8", "Payment received, customer was not registered, new customer info given, no new order by customer", "Payment", specificActionDetails)     
+	            respondToClient(w, 201, pmt, "Payment recorded successfully")
+	        }else{
+	            var custmr db.User
+	            database.Create(&pmt.Customer)
+	            specificActionDetails := fmt.Sprintf("New customer registered: customer ID = %s", custmr.ID)
+	            newActionRecord(custmr.ID, "ACN0002/8", "New customer was registered through create payment endpoint, no new order by customer", "Customer", specificActionDetails)     
+	            respondToClient(w, 201, custmr, "Customer registered successfully")
+	        }
 	        //done.
-        case 13:
+        case "13":
             //customer does not exist, new customer info given, an order in the request, item=order
             var recvdPmt ReceivedPayment
             var pmt db.Payment
 	        _ = json.NewDecoder(r.Body).Decode(&recvdPmt)
-	        _ = json.NewDecoder(r.Body).Decode(&pmt)
 	        
 	        //create an order first
 	        orderNew := db.OrderOrBooking{
@@ -154,12 +177,16 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	            Quantity:  recvdPmt.Order.Quantity,
 	            Status:    recvdPmt.Order.Status,
 	            Paid:      true,
-	            Createdby: pmt.createdby,
+	            CreatedBy: recvdPmt.CreatedBy,
 	            //Customer: {}, //ignored on creation
 	        }
-	        database.Omit("Customer").Create(&orderNew)
+	        database.Omit("Customer","CustomerID","VisitID","InvoiceID","BillID").Create(&orderNew)
 	        //ID of the newly created order = orderNew.ID
-	        pmt.Itemid = orderNew.ID
+	        pmt.ItemID = orderNew.ID
+	        pmt.Item   = recvdPmt.Item
+	        pmt.Amount = recvdPmt.Amount
+	        pmt.Customer = recvdPmt.Customer
+	        pmt.CreatedBy = recvdPmt.CreatedBy
 	        database.Create(&pmt)
 	        //find the ID of the newly auto created customer, and use it to update orderNew's "customerid" field
 	        ok, custmr, err := userExists(pmt.Customer.Phone)
@@ -177,114 +204,117 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
             }
 	        //finished.
 	        
-	        specificActionDetails := fmt.Printf("Customer: %s phone: %s",custmr.ID,custmr.Phone)
-	        newActionRecord(pmt.createdby, "ACN0002/13", "Payment received, customer not registered, new customer info given, customer ordered for an item, item=order ", specificActionDetails)     
+	        specificActionDetails := fmt.Sprintf("Customer: %s phone: %s",custmr.ID,custmr.Phone)
+	        newActionRecord(pmt.CreatedBy, "ACN0002/13", "Payment received, customer not registered, new customer info given, customer ordered for an item, item=order ", "Payment", specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
-        case 14:
+        case "14":
             //customer does not exist, new customer info given, an order in the request, item=invoice
             var recvdPmt ReceivedPayment
             var pmt db.Payment
 	        _ = json.NewDecoder(r.Body).Decode(&recvdPmt)
-	        _ = json.NewDecoder(r.Body).Decode(&pmt)
 	        
 	        //create an order first
 	        invoiceNew := db.Invoice{
-	            Amount:    pmt.Amount,
+	            Amount:    recvdPmt.Amount,
 	            Status:    "paid",
-	            Createdby: pmt.createdby,
+	            CreatedBy: recvdPmt.CreatedBy,
 	            Orders:    recvdPmt.Invoice.Orders,
 	            //Customer: {}, //ignored on creation
 	        }
-	        invoiceOrders := &invoiceNew.Orders
-            for _, order := range invoiceOrders {
+	        //invoiceOrders := &invoiceNew.Orders
+            for k, order := range invoiceNew.Orders {
                 order.Paid = true
-                order.Createdby = pmt.Createdby
-                if order.Item == "product" && orderNew.Status == "served" {
+                order.CreatedBy = recvdPmt.CreatedBy
+                invoiceNew.Orders[k] = order
+                if order.Item == "product" && order.Status == "served" {
                     balanceStock(order.ItemID, "remove", order.Quantity)
                 }
             }
-	        database.Omit("Customer").Omit("Orders.Customer").Create(&invoiceNew)
+	        database.Omit("Customer","CustomerID","Orders.Customer","Orders.CustomerID","Orders.VisitID","Orders.BillID").Create(&invoiceNew)
 	        //ID of the newly created invoice = invoiceNew.ID
-	        pmt.Itemid = invoiceNew.ID
+	        pmt.ItemID = invoiceNew.ID
+	        pmt.Item   = recvdPmt.Item
+	        pmt.Amount = recvdPmt.Amount
+	        pmt.Customer = recvdPmt.Customer
+	        pmt.CreatedBy = recvdPmt.CreatedBy
 	        database.Create(&pmt)
 	        //find the ID of the newly auto created customer, and use it to update invoiceNew's "customerid" field
-	        ok, custmr, err := userExists(pmt.Customer.Phone)
-	        if err != nil {
-	            fmt.Println("Error occured while trying to get the ID of the customer that was auto-created by creating payment.")
-	        }
-	        
-	        if ok {
-	            invoiceNew.CustomerID = custmr.ID
-	        }
-	        for _, order := range invoiceOrders {
-                order.CustomerID = custmr.ID
+	        invoiceNew.CustomerID = pmt.Customer.ID
+	            
+	        for k, order := range invoiceNew.Orders {
+                order.CustomerID = pmt.Customer.ID
                 order.InvoiceID = invoiceNew.ID
+                invoiceNew.Orders[k] = order
             }
+            database.Table("order_or_bookings").Where("invoice_id = ?", invoiceNew.ID).Update("customer_id", pmt.Customer.ID)
+            
 	        //now ready to update the invoiceNew in the database
 	        database.Save(&invoiceNew)
             //finished.
 	        
-	        specificActionDetails := fmt.Printf("Customer: %s phone: %s",custmr.ID,custmr.Phone)
-	        newActionRecord(pmt.createdby, "ACN0002/14", "Payment received, customer not registered, new customer info given, customer ordered for an item, item=invoice ", specificActionDetails)     
+	        specificActionDetails := fmt.Sprintf("Customer: %s phone: %s",pmt.Customer.ID, pmt.Customer.Phone)
+	        newActionRecord(pmt.CreatedBy, "ACN0002/14", "Payment received, customer not registered, new customer info given, customer ordered for an item, item=invoice ", "Payment", specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
-        case 15:
+        case "15":
             //customer does not exist, new customer info given, an order in the request, item=bill
             var recvdPmt ReceivedPayment
             var pmt db.Payment
 	        _ = json.NewDecoder(r.Body).Decode(&recvdPmt)
-	        _ = json.NewDecoder(r.Body).Decode(&pmt)
 	        
 	        //create an order first
 	        billNew := db.Bill{
-	            Amount:    pmt.Amount,
+	            Amount:    recvdPmt.Amount,
 	            Status:    "paid",
-	            Createdby: pmt.createdby,
+	            CreatedBy: recvdPmt.CreatedBy,
 	            Invoices:  recvdPmt.Bill.Invoices,
 	            Orders:    recvdPmt.Bill.Orders,
 	            //Customer: {}, //ignored on creation
 	        }
-	        billOrders := &billNew.Orders
-            for _, order := range billOrders {
+	        //billOrders := &billNew.Orders
+            for k, order := range billNew.Orders {
                 order.Status = "billed"
                 order.Paid = true
-                order.Createdby = pmt.Createdby
+                order.CreatedBy = recvdPmt.CreatedBy
+                billNew.Orders[k] = order
                 if order.Item == "product" {
                     balanceStock(order.ItemID, "remove", order.Quantity)
                 }
             }
-	        database.Omit("Customer").Omit("Orders.Customer").Create(&billNew)
+            
+	        database.Omit("Customer","CustomerID","Orders.Customer","Orders.CustomerID","Orders.VisitID","Orders.InvoiceID").Create(&billNew)
 	        //ID of the newly created bill = billNew.ID
-	        pmt.Itemid = billNew.ID
+	        pmt.ItemID = billNew.ID
+	        pmt.Item   = recvdPmt.Item
+	        pmt.Amount = recvdPmt.Amount
+	        pmt.Customer = recvdPmt.Customer
+	        pmt.CreatedBy = recvdPmt.CreatedBy
 	        database.Create(&pmt)
 	        //find the ID of the newly auto created customer, and use it to update billNew's "customerid" field
-	        ok, custmr, err := userExists(pmt.Customer.Phone)
-	        if err != nil {
-	            fmt.Println("Error occured while trying to get the ID of the customer that was auto-created by creating payment.")
-	        }
+	        billNew.CustomerID = pmt.Customer.ID
 	        
-	        if ok {
-	            billNew.Customerid = custmr.ID
-	        }
-	        for _, order := range billOrders {
+	        for k, order := range billNew.Orders {
                 order.BillID = billNew.ID
-                order.CustomerID = custmr.ID
+                order.CustomerID = pmt.Customer.ID
+                billNew.Orders[k] = order
             }
+            database.Table("order_or_bookings").Where("bill_id = ?", billNew.ID).Update("customer_id", pmt.Customer.ID)
+            
 	        //now ready to update the billNew in the database
 	        database.Save(&billNew)
             //finished.
 	        
-	        specificActionDetails := fmt.Printf("Customer: %s phone: %s",custmr.ID,custmr.Phone)
-	        newActionRecord(pmt.createdby, "ACN0002/15", "Payment received, customer not registered, new customer info given, customer ordered for an item, item=bill ", specificActionDetails)     
+	        specificActionDetails := fmt.Sprintf("Customer: %s phone: %s",pmt.Customer.ID, pmt.Customer.Phone)
+	        newActionRecord(pmt.CreatedBy, "ACN0002/15", "Payment received, customer not registered, new customer info given, customer ordered for an item, item=bill ", "Payment", specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
-        case 17:
+        case "17":
             //customer exists, no new customer info given, no order in the request, item=order
             var pmt db.Payment
 	        _ = json.NewDecoder(r.Body).Decode(&pmt)
 	        
-	        ok, custmr, err := userExists(pmt.CustomerID)
+	        ok, custmr, err := userExists(fmt.Sprintf("%s",pmt.CustomerID))
 	        if err != nil {
 	            fmt.Println("Error occured while trying to confirm existace of specified custmer on receiving payment.")
 	        }
@@ -293,7 +323,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	            respondToClient(w, 428, pmt, "Specified customer not found. Please register first")
 	        }
 	        
-	        ook, order, errr := orderExists(pmt.ItemID)
+	        ook, order, errr := orderExists(fmt.Sprintf("%s",pmt.ItemID))
 	        if errr != nil {
 	            fmt.Printf("Can't find the specified %s item.\n",pmt.Item)
 	        }
@@ -303,21 +333,21 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	            respondToClient(w, 428, pmt, msge)
 	        }
 	        
-	        order.paid = true
+	        order.Paid = true
 	        order.CustomerID = pmt.CustomerID
 	        database.Save(&order)
-	        if order.Item == "product" && orderNew.Status == "served" {
+	        if order.Item == "product" && order.Status == "served" {
                 balanceStock(order.ItemID, "remove", order.Quantity)
             }
 	        
 	        database.Omit("Customer").Create(&pmt)
 	        //finished.
 	        
-	        specificActionDetails := fmt.Printf("Registered customer (id: %s) paid for earlier order: %s payment ID = %s", custmr.ID, order.ItemID, pmt.ID)
-	        newActionRecord(pmt.createdby, "ACN0002/17", "Payment received, from registered customer, no new order by customer", specificActionDetails)     
+	        specificActionDetails := fmt.Sprintf("Registered customer (id: %s) paid for earlier order: %s payment ID = %s", custmr.ID, order.ItemID, pmt.ID)
+	        newActionRecord(pmt.CreatedBy, "ACN0002/17", "Payment received, from registered customer, no new order by customer", "Payment", specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
-        case 21:
+        case "21":
             //customer exists, no new customer info given, an order in the request, item=order
             var recvdPmt ReceivedPayment
             var pmt db.Payment
@@ -331,24 +361,24 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	            Quantity:  recvdPmt.Order.Quantity,
 	            Status:    recvdPmt.Order.Status,
 	            Paid:      true,
-	            Createdby: pmt.createdby,
+	            CreatedBy: pmt.CreatedBy,
 	            CustomerID: pmt.CustomerID,
 	            //Customer: {}, //ignored on creation
 	        }
 	        database.Omit("Customer").Create(&orderNew)
 	        //ID of the newly created order = orderNew.ID
-	        pmt.Itemid = orderNew.ID
+	        pmt.ItemID = orderNew.ID
 	        database.Omit("Customer").Create(&pmt)
 	        if orderNew.Item == "product" && orderNew.Status == "served" {
                 balanceStock(orderNew.ItemID, "remove", orderNew.Quantity)
             }
 	        //finished.
 	        
-	        specificActionDetails := fmt.Printf("Customer: %s, Ordered: %s",pmt.CustomerID, orderNew.Item)
-	        newActionRecord(pmt.createdby, "ACN0002/21", "Payment received, customer is registered, new customer info not needed, customer ordered for an item, item=order", specificActionDetails)     
+	        specificActionDetails := fmt.Sprintf("Customer: %s, Ordered: %s",pmt.CustomerID, orderNew.ID)
+	        newActionRecord(pmt.CreatedBy, "ACN0002/21", "Payment received, customer is registered, new customer info not needed, customer ordered for an item, item=order", "Payment", specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
-        case 22:
+        case "22":
             //customer exists, no new customer info given, an order in the request, item=invoice
             var recvdPmt ReceivedPayment
             var pmt db.Payment
@@ -359,31 +389,31 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	        invoiceNew := db.Invoice{
 	            Amount:    pmt.Amount,
 	            Status:    "paid",
-	            Createdby: pmt.createdby,
+	            CreatedBy: pmt.CreatedBy,
 	            Orders:    recvdPmt.Invoice.Orders,
 	            CustomerID: pmt.CustomerID,
 	            //Customer: {}, //ignored on creation
 	        }
-	        invoiceOrders := &invoiceNew.Orders
-            for _, order := range invoiceOrders {
+	        //invoiceOrders := &invoiceNew.Orders
+            for _, order := range invoiceNew.Orders {
                 order.Paid = true
                 order.CustomerID = pmt.CustomerID
-                order.Createdby = pmt.Createdby
-                if order.Item == "product" && orderNew.Status == "served" {
+                order.CreatedBy = pmt.CreatedBy
+                if order.Item == "product" && order.Status == "served" {
                     balanceStock(order.ItemID, "remove", order.Quantity)
                 }
             }
 	        database.Omit("Customer").Omit("Orders.Customer").Create(&invoiceNew)
 	        //ID of the newly created invoice = invoiceNew.ID
-	        pmt.Itemid = invoiceNew.ID
+	        pmt.ItemID = invoiceNew.ID
 	        database.Omit("Customer").Create(&pmt)
 	        //finished.
 	        
-	        specificActionDetails := fmt.Printf("Customer: %s, Ordered: %s",pmt.CustomerID, orderNew.Item)
-	        newActionRecord(pmt.createdby, "ACN0002/22", "Payment received, customer is registered, new customer info not needed, customer ordered for an item, item=invoice", specificActionDetails)     
+	        specificActionDetails := fmt.Sprintf("Customer: %s, Ordered: %s",pmt.CustomerID, invoiceNew.ID)
+	        newActionRecord(pmt.CreatedBy, "ACN0002/22", "Payment received, customer is registered, new customer info not needed, customer ordered for an item, item=invoice", "Payment", specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
-        case 23:
+        case "23":
             //customer exists, no new customer info given, an order in the request, item=bill
             var recvdPmt ReceivedPayment
             var pmt db.Payment
@@ -391,37 +421,37 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	        _ = json.NewDecoder(r.Body).Decode(&pmt)
 	        
 	        //create an order first
-	        billNew := db.Invoice{
+	        billNew := db.Bill{
 	            Amount:    pmt.Amount,
 	            Status:    "paid",
-	            Createdby: pmt.createdby,
+	            CreatedBy: pmt.CreatedBy,
 	            Orders:    recvdPmt.Invoice.Orders,
 	            Invoices:  recvdPmt.Bill.Invoices,
 	            CustomerID: pmt.CustomerID,
 	            //Customer: {}, //ignored on creation
 	        }
-	        invoiceOrders := &billNew.Orders
-            for _, order := range invoiceOrders {
+	        //billOrders := &billNew.Orders
+            for _, order := range billNew.Orders {
                 order.Status = "billed"
                 order.Paid = true
                 order.CustomerID = pmt.CustomerID
-                order.Createdby = pmt.Createdby
+                order.CreatedBy = pmt.CreatedBy
                 if order.Item == "product" {
                     balanceStock(order.ItemID, "remove", order.Quantity)
                 }
             }
 	        database.Omit("Customer").Omit("Orders.Customer").Create(&billNew)
 	        //ID of the newly created invoice = billNew.ID
-	        pmt.Itemid = billNew.ID
+	        pmt.ItemID = billNew.ID
 	        database.Omit("Customer").Create(&pmt)
 	        //finished.
 	        
-	        specificActionDetails := fmt.Printf("Customer: %s, Ordered: %s",pmt.CustomerID, billNew.Item)
-	        newActionRecord(pmt.createdby, "ACN0002/23", "Payment received, customer is registered, new customer info not needed, customer ordered for an item, item=bill", specificActionDetails)     
+	        specificActionDetails := fmt.Sprintf("Customer: %s, Ordered: %s",pmt.CustomerID, billNew.ID)
+	        newActionRecord(pmt.CreatedBy, "ACN0002/23", "Payment received, customer is registered, new customer info not needed, customer ordered for an item, item=bill", "Payment", specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
         default:
-            respondToClient(w, 400, pmt, "Bad Request (the service request is not well specified)")
+            respondToClient(w, 400, nil, "Bad Request (the service request is not well specified)")
     }
 }
 
@@ -429,26 +459,54 @@ func UpdatePayment(w http.ResponseWriter, r *http.Request) {
     //TODO: implement
 }
 
-func paymentExists (identifier string) (bool, db.Bill, error) {
+func paymentExists (identifier string) (bool, db.Payment, error) {
     //the identifier must be ID
-    payment := db.Payment
+    var payment db.Payment
     response := database.Where("id = ?", identifier).First(&payment)                   
     numberOfRowsFound := response.RowsAffected
     exists := numberOfRowsFound > 0
     fmt.Println(numberOfRowsFound, "payments exist =", exists)
-    return exists, bill, response.Error
+    return exists, payment, response.Error
 }
 
 func ReadPayment(w http.ResponseWriter, r *http.Request) {
-    readOne(w, r, paymentExists)
+    w.Header().Set("Content-Type","application/json")
+    params := mux.Vars(r)
+    identf := params["id"]
+    //ensure that the identifier is converted to string if it's not one
+    identifier := fmt.Sprintf("%s", identf)
+    
+    ok, payment, err := paymentExists(identifier)
+    if err != nil {
+        respondToClient(w, 400, nil, err.Error())
+    }
+    
+    if !ok {
+        respondToClient(w, 404, nil, "Specified payment record not found")
+    }
+    
+    respondToClient(w, 200, payment, "")
 }
 
 func ReadAllPayments(w http.ResponseWriter, r *http.Request) {
-    payments := []db.Payment
+    fmt.Println("Allpayments read ...")
+    var payments []db.Payment
     response := database.Find(&payments)
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %s records", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
     respondToClient(w, 200, payments, msg)
 }
+
+func ReadCountPayments(w http.ResponseWriter, r *http.Request) {
+    fmt.Println("Payments count ...")
+    var payments []db.Payment
+    response := database.Find(&payments)
+    numberOfRowsFound := response.RowsAffected
+    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
+    respondToClient(w, 200, numberOfRowsFound, msg)
+}
+
+
+
 
 

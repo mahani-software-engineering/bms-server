@@ -3,7 +3,6 @@ package usecases
 
 import (
     "net/http"
-    "encoding/json"
     "github.com/mahani-software-engineering/bms-server/db"
 )
 
@@ -13,8 +12,12 @@ func newActionRecord(uid uint, an, descr, entity, option string) {
     action.OnEntity = entity
     action.SpecificEntity = option
     action.Description = descr
-    action.UserID = uid
-    database.Create(&action)
+    if(uid > 0){
+      action.UserID = uid
+      database.Create(&action)
+    }else{
+      database.Omit("UserID").Create(&action)
+    }
 }
 
 

@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/mahani-software-engineering/bms-server/db"
 	uc "github.com/mahani-software-engineering/bms-server/usecases"
 )
 
@@ -54,7 +53,7 @@ func getRouter() *mux.Router {
 	//Package
 	router.HandleFunc("/package", uc.CreatePackage).Methods("POST")
 	router.HandleFunc("/package/{id}", uc.UpdatePackage).Methods("PUT")
-	router.HandleFunc("/package/{id}", readPackage).Methods("GET")
+	router.HandleFunc("/package/{id}", uc.ReadPackage).Methods("GET")
 	router.HandleFunc("/package", uc.ReadAllPackages).Methods("GET")
 	//Visit
 	router.HandleFunc("/visit", uc.CreateVisit).Methods("POST")
@@ -76,10 +75,20 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/booking/byinvoice/{id}", uc.ReadOrdersByInvoice).Methods("GET")
 	router.HandleFunc("/order/bybill/{id}", uc.ReadOrdersByBill).Methods("GET")
 	router.HandleFunc("/booking/bybill/{id}", uc.ReadOrdersByBill).Methods("GET")
+	router.HandleFunc("/orders/count", uc.ReadCountOrdersOrBookings).Methods("GET")
+	router.HandleFunc("/bookings/count", uc.ReadCountOrdersOrBookings).Methods("GET")
+	//statistics
+	router.HandleFunc("/statistics/customers/thisweek", uc.StatsCustomersThisWeek).Methods("GET")
+	router.HandleFunc("/statistics/revenue/thisweek", uc.StatsRevenueThisWeek).Methods("GET")
+	router.HandleFunc("/statistics/revenue/sources/thisweek", uc.StatsRevenueSrcThisWeek).Methods("GET")
+	router.HandleFunc("/statistics/revenue/sources/annual", uc.StatsRevenueSrcAnnual).Methods("GET")
+	router.HandleFunc("/statistics/annual/revenue", uc.StatsAnnualRevenue).Methods("GET")
+	
 	//Payment
-	router.HandleFunc("/payment/{id:[5,6,7,9,13,14,15,17,18,19,21,22,23]}", uc.CreatePayment).Methods("POST")
+	router.HandleFunc("/payment/{id}", uc.CreatePayment).Methods("POST")
 	router.HandleFunc("/payment/{id}", uc.UpdatePayment).Methods("PUT")
 	router.HandleFunc("/payment/{id}", uc.ReadPayment).Methods("GET")
+	router.HandleFunc("/payments/count", uc.ReadCountPayments).Methods("GET")
 	router.HandleFunc("/payment", uc.ReadAllPayments).Methods("GET")
 	//Invoice
 	router.HandleFunc("/invoice/{id}", uc.CreateInvoice).Methods("POST")
@@ -94,12 +103,14 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/stock/remove", uc.CreateStockTransaction).Methods("POST")
 	router.HandleFunc("/stock/update/{id}", uc.UpdateStockTransaction).Methods("PUT")
 	router.HandleFunc("/stock/read/{id}", uc.ReadStockTransaction).Methods("GET")
-	router.HandleFunc("/stock/browse", uc.ReadAllStockTransactions).Methods("GET")
+	router.HandleFunc("/stock/transactions", uc.ReadAllStockTransactions).Methods("GET")
+	
 	//Expense
 	router.HandleFunc("/expense", uc.CreateExpense).Methods("POST")
 	router.HandleFunc("/expense/{id}", uc.UpdateExpense).Methods("PUT")
 	router.HandleFunc("/expense/{id}", uc.ReadExpense).Methods("GET")
 	router.HandleFunc("/expense", uc.ReadAllExpenses).Methods("GET")
+	router.HandleFunc("/expenses/count", uc.ReadCountExpenses).Methods("GET")
 	//UserAction
 	router.HandleFunc("/activity/{id}", uc.ReadUserAction).Methods("GET")
 	router.HandleFunc("/activity", uc.ReadAllUserActions).Methods("GET")
@@ -114,8 +125,9 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/notification/{id}", uc.ReadNotification).Methods("GET")
 	router.HandleFunc("/notification", uc.ReadAllNotifications).Methods("GET")
 	//Home
+	router.HandleFunc("/", index ).Methods("POST")
 	router.PathPrefix("/").Handler( http.FileServer(http.FS(website)) ).Methods("GET")
-	router.PathPrefix("/").Handler( index ).Methods("POST")
+	
 	//Not found
 	router.NotFoundHandler = http.HandlerFunc(resourceNotFound)
 	
@@ -128,7 +140,7 @@ func main() {
     addr := flag.String("addr", wsEndPoint, "AFENET API service address") 
     flag.Parse()
     //++++++++++++++++++++
-    db.Init()
+    uc.Init()
     
     fmt.Println("Server listening on port: "+(strings.Split(wsEndPoint,":")[1])) 
     log.Fatal(http.ListenAndServe(*addr, getRouter()))

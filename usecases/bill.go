@@ -2,16 +2,15 @@ package usecases
 
 
 import (
+    "fmt"
     "net/http"
-    "encoding/json"
+    //"github.com/gorilla/mux"
     "github.com/mahani-software-engineering/bms-server/db"
 )
 
-
-
 func CreateBill(w http.ResponseWriter, r *http.Request) {
-    params := mux.Vars(r)
-    customerId := params["id"]
+    //params := mux.Vars(r)
+    //customerId := params["id"]
     //if there are any invoices listed in the received request, 
     //first retrieve each of them and ensure that all orders in 
     //that invoice are updated to served if they are not yet paid (ie, paid=false).
@@ -88,7 +87,7 @@ func CreateBill(w http.ResponseWriter, r *http.Request) {
 
 func billExists (identifier string) (bool, db.Bill, error) {
     //the identifier must be ID
-    bill := db.Bill
+    var bill db.Bill
     response := database.Where("id = ?", identifier).First(&bill)                   
     numberOfRowsFound := response.RowsAffected
     exists := numberOfRowsFound > 0
@@ -96,16 +95,16 @@ func billExists (identifier string) (bool, db.Bill, error) {
 }
 
 func ReadBill(w http.ResponseWriter, r *http.Request) {
-    readOne(w, r, billExists)
+    //readOne(w, r, billExists)
 }
 
 func ReadAllBills(w http.ResponseWriter, r *http.Request) {
-    bills := []db.Bill
+    var bills []db.Bill
     response := database.Find(&bills)
     numberOfRowsFound := response.RowsAffected
     exists := numberOfRowsFound > 0
     fmt.Println(numberOfRowsFound, "bills exist =", exists)
-    msg := fmt.Sprintf("Found %s records", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
     respondToClient(w, 200, bills, msg)
 }
 

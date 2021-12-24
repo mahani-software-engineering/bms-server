@@ -2,6 +2,8 @@ package usecases
 
 
 import (
+    "fmt"
+    "errors"
     "strconv"
     "net/http"
     "encoding/json"
@@ -58,19 +60,31 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 
 func userExists (identifier string) (bool, db.User, error) {
     //the identifier can be ID, phone, email, username
-    user := db.User
+    var user db.User
     response := database.Where("id = ? OR phone = ? OR email = ? OR username = ?", identifier, identifier, identifier, identifier).First(&user)                   
     numberOfRowsFound := response.RowsAffected
     userExists := numberOfRowsFound > 0
-    return userExists, user, response.Error
+    
+    if !userExists {
+        if id, err := strconv.Atoi(identifier); err == nil {
+            resp := database.Where("id = ?", uint(id)).First(&user)
+            rowsFound := resp.RowsAffected
+            exists := rowsFound > 0
+            return exists, user, response.Error
+        }else{
+            return false, user, errors.New("user id must be a number")
+        } 
+    }else{
+        return userExists, user, response.Error
+    }
 }
 
 func ReadUser(w http.ResponseWriter, r *http.Request) {
-    readOne(w, r, userExists)
+    //readOne(w, r, userExists)
 }
 
 func ReadAllUsers(w http.ResponseWriter, r *http.Request) {
-    users := []db.User
+    var users []db.User
     response := database.Find(&users)
     numberOfRowsFound := response.RowsAffected
     msg := fmt.Sprintf("Found %s records", numberOfRowsFound)

@@ -32,7 +32,7 @@ CASE: (13) (customer does not exist, new customer info given, an order in the re
       //customerid         (edit/attach after creating this payment and hence getting new customer ID)
       item:"product",
       itemid: 12,
-      qauntity:3,
+      quantity:3,
       status:"served"
       //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
       //visit:       (beyond MVP scope)
@@ -61,7 +61,7 @@ CASE: (14) (customer does not exist, new customer info given, an order in the re
           //customerid         (attach after creating this payment and hence getting new customer ID)
           item:"product",
           itemid: 12,
-          qauntity:3,
+          quantity:3,
           status:"served"
           //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -73,7 +73,7 @@ CASE: (14) (customer does not exist, new customer info given, an order in the re
           //customerid         (attach after creating this payment and hence getting new customer ID)
           item:"product",
           itemid: 9,
-          qauntity:3,
+          quantity:3,
           status:"served"
           //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -85,7 +85,7 @@ CASE: (14) (customer does not exist, new customer info given, an order in the re
           //customerid         (attach after creating this payment and hence getting new customer ID)
           item:"product",
           itemid: 21,
-          qauntity:3,
+          quantity:3,
           status:"served"
           //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -117,7 +117,7 @@ CASE: (15) (customer does not exist, new customer info given, an order in the re
           //customerid         (attach after creating this payment and hence getting new customer ID)
           item:"product",
           itemid: 12,
-          qauntity:3,
+          quantity:3,
           //status:"billed"  (set from backend before creating this bill. ie, dont receive it from client)
           //paid:true,   (set from backend before creating this bill. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -129,7 +129,7 @@ CASE: (15) (customer does not exist, new customer info given, an order in the re
           //customerid         (attach after creating this payment and hence getting new customer ID)
           item:"product",
           itemid: 9,
-          qauntity:3,
+          quantity:3,
           //status:"billed"  (set from backend before creating this bill. ie, dont receive it from client)
           //paid:true,   (set from backend before creating this bill. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -141,7 +141,7 @@ CASE: (15) (customer does not exist, new customer info given, an order in the re
           //customerid         (attach after creating this payment and hence getting new customer ID)
           item:"product",
           itemid: 21,
-          qauntity:3,
+          quantity:3,
           //status:"billed"  (set from backend before creating this bill. ie, dont receive it from client)
           //paid:true,   (set from backend before creating this bill. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -178,7 +178,7 @@ CASE: (5) (customer does not exist, no new customer info given, an order in the 
       //customerid         (ignore while creating this order)
       item:"product",
       itemid: 12,
-      qauntity:3,
+      quantity:3,
       status:"served"
       //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
       //visit:       (beyond MVP scope)
@@ -207,7 +207,7 @@ CASE: (6) (customer does not exist, no new customer info given, an order in the 
           //customerid         (ignore while creating this order)
           item:"product",
           itemid: 12,
-          qauntity:3,
+          quantity:3,
           status:"served"
           //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -219,7 +219,7 @@ CASE: (6) (customer does not exist, no new customer info given, an order in the 
           //customerid         (ignore while creating this order)
           item:"product",
           itemid: 9,
-          qauntity:3,
+          quantity:3,
           status:"served" 
           //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -231,7 +231,7 @@ CASE: (6) (customer does not exist, no new customer info given, an order in the 
           //customerid         (ignore while creating this order)
           item:"product",
           itemid: 21,
-          qauntity:3,
+          quantity:3,
           status:"served" 
           //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -263,7 +263,7 @@ CASE: (7) (customer does not exist, no new customer info given, an order in the 
           //customerid         (ignore while creating this order)
           item:"product",
           itemid: 12,
-          qauntity:3,
+          quantity:3,
           //status:"billed"  (set from backend before creating this bill. ie, dont receive it from client)
           //paid:true,   (set from backend before creating this bill. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -275,7 +275,7 @@ CASE: (7) (customer does not exist, no new customer info given, an order in the 
           //customerid         (ignore while creating this order)
           item:"product",
           itemid: 9,
-          qauntity:3,
+          quantity:3,
           //status:"billed"  (set from backend before creating this bill. ie, dont receive it from client)
           //paid:true,   (set from backend before creating this bill. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -287,7 +287,7 @@ CASE: (7) (customer does not exist, no new customer info given, an order in the 
           //customerid         (ignore while creating this order)
           item:"product",
           itemid: 21,
-          qauntity:3,
+          quantity:3,
           //status:"billed"  (set from backend before creating this bill. ie, dont receive it from client)
           //paid:true,   (set from backend before creating this bill. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -312,7 +312,7 @@ CASE: (21) (customer exists, no new customer info given, an order in the request
       //customerid         (use this payment's "customerid" above)
       item:"product",
       itemid: 12,
-      qauntity:3,
+      quantity:3,
       status:"served"
       //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
       //visit:       (beyond MVP scope)
@@ -342,7 +342,7 @@ CASE: (22) (customer exists, no new customer info given, an order in the request
           //customerid         (use this payment's "customerid" above)
           item:"product",
           itemid: 12,
-          qauntity:3,
+          quantity:3,
           status:"served"
           //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -354,7 +354,7 @@ CASE: (22) (customer exists, no new customer info given, an order in the request
           //customerid         (use this payment's "customerid" above)
           item:"product",
           itemid: 9,
-          qauntity:3,
+          quantity:3,
           status:"served"
           //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -366,7 +366,7 @@ CASE: (22) (customer exists, no new customer info given, an order in the request
           //customerid         (use this payment's "customerid" above)
           item:"product",
           itemid: 21,
-          qauntity:3,
+          quantity:3,
           status:"served"
           //paid:true,   (set from backend before creating this invoice. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -399,7 +399,7 @@ CASE: (23) (customer exists, no new customer info given, an order in the request
           //customerid         (use this payment's "customerid" above)
           item:"product",
           itemid: 12,
-          qauntity:3,
+          quantity:3,
           //status:"billed"  (set from backend before creating this bill. ie, dont receive it from client)
           //paid:true,   (set from backend before creating this bill. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -411,7 +411,7 @@ CASE: (23) (customer exists, no new customer info given, an order in the request
           //customerid         (use this payment's "customerid" above)
           item:"package",
           itemid: 9,
-          qauntity:3,
+          quantity:3,
           //status:"billed"  (set from backend before creating this bill. ie, dont receive it from client)
           //paid:true,   (set from backend before creating this bill. ie, dont receive it from client)
           //visit:       (beyond MVP scope)
@@ -423,7 +423,7 @@ CASE: (23) (customer exists, no new customer info given, an order in the request
           //customerid         (use this payment's "customerid" above)
           item:"service",
           itemid: 21,
-          qauntity:3,
+          quantity:3,
           status: "billed"
           //paid:true,   (set from backend before creating this bill. ie, dont receive it from client)
           //visit:       (beyond MVP scope)

@@ -2,6 +2,7 @@ package usecases
 
 
 import (
+    "fmt"
     "net/http"
     "encoding/json"
     "github.com/mahani-software-engineering/bms-server/db"
@@ -21,7 +22,7 @@ func UpdateExpense(w http.ResponseWriter, r *http.Request) {
 
 func expenseExists (identifier string) (bool, db.Expense, error) {
     //the identifier must be ID
-    expense := db.Expense
+    var expense db.Expense
     response := database.Where("id = ?", identifier).First(&expense)                   
     numberOfRowsFound := response.RowsAffected
     exists := numberOfRowsFound > 0
@@ -29,18 +30,32 @@ func expenseExists (identifier string) (bool, db.Expense, error) {
 }
 
 func ReadExpense(w http.ResponseWriter, r *http.Request) {
-    readOne(w, r, expenseExists)
+    //readOne(w, r, expenseExists)
 }
 
 func ReadAllExpenses(w http.ResponseWriter, r *http.Request) {
-    expenses := []db.Expense
+    var expenses []db.Expense
     response := database.Find(&expenses)
     numberOfRowsFound := response.RowsAffected
     exists := numberOfRowsFound > 0
     fmt.Println(numberOfRowsFound, "expenses exist =", exists)
-    msg := fmt.Sprintf("Found %s records", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
     respondToClient(w, 200, expenses, msg)
 }
+
+func ReadCountExpenses(w http.ResponseWriter, r *http.Request) {
+    fmt.Println("expenses count ...")
+    var expenses []db.Expense
+    response := database.Find(&expenses)
+    numberOfRowsFound := response.RowsAffected
+    exists := numberOfRowsFound > 0
+    fmt.Println(numberOfRowsFound, "expenses exist =", exists)
+    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
+    fmt.Println("ReadCountExpenses -> numberOfRowsFound=",numberOfRowsFound)
+    respondToClient(w, 200, numberOfRowsFound, msg)
+}
+
+
 
 
 

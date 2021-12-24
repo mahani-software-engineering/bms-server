@@ -1,8 +1,10 @@
 package usecases
 
 import (
+   "fmt"
    "net/http"
    "gorm.io/gorm"
+   "encoding/json"
    "github.com/gorilla/mux"
    "github.com/mahani-software-engineering/bms-server/db"
 )
@@ -18,9 +20,9 @@ func readOne(w http.ResponseWriter, r *http.Request, existsFunc func(string)(boo
     params := mux.Vars(r)
     identf := params["id"]
     //ensure that the identifier is converted to string if it's not one
-    identifier = fmt.Sprintf("%s", identf)
+    identifier := fmt.Sprintf("%s", identf)
     
-    ok, data, err := existsFunc(indentifier)
+    ok, data, err := existsFunc(identifier)
     if err != nil {
         respondToClient(w, 400, nil, err.Error())
     }
@@ -34,41 +36,42 @@ func readOne(w http.ResponseWriter, r *http.Request, existsFunc func(string)(boo
 
 func respondToClient(w http.ResponseWriter, statusCode uint, edata interface{}, simpleMessage string){
     w.Header().Set("Content-Type","application/json")
-    
-    switch (statusCode){
+    fmt.Printf("respondToClient: edata=%v, statusCode=%v, simpleMessage=%s\n",edata,statusCode,simpleMessage)
+    switch {
         case 200 <= statusCode || statusCode < 300:
+            fmt.Println("200 <= statusCode || statusCode < 300")
             w.WriteHeader(http.StatusOK)
-            if data != nil && simpleMessage != "" {
-                json.NewEncoder(w).Encode(struct{message string; data interface{}}{ message: simpleMessage, data:edata })
-            }else if data != nil && simpleMessage == "" {
-                json.NewEncoder(w).Encode(struct{data interface{}}{ data:edata})
-            }else if data == nil && simpleMessage != "" {
-                json.NewEncoder(w).Encode(struct{message string}{ message: simpleMessage})
+            if edata != nil && simpleMessage != "" {
+                json.NewEncoder(w).Encode(struct{Message string; Data interface{}}{ Message: simpleMessage, Data:edata })
+            }else if edata != nil && simpleMessage == "" {
+                json.NewEncoder(w).Encode(struct{Data interface{}}{ Data:edata})
+            }else if edata == nil && simpleMessage != "" {
+                json.NewEncoder(w).Encode(struct{Message string}{ Message: simpleMessage})
             }else{
-                json.NewEncoder(w).Encode(struct{message string}{ message: "Oops! Unexpected error occured." })
+                json.NewEncoder(w).Encode(struct{Message string}{ Message: "Oops! Unexpected error occured." })
             }
         case 400 <= statusCode || statusCode < 500:
-            //w.WriteHeader(http.StatusBadRequest)
-            const exactCode = statusCode
-            //w.WriteHeader(http.StatusText(statusCode))
-            w.WriteHeader(exactCode)
-            json.NewEncoder(w).Encode(struct{message string}{ message: simpleMessage })
+            fmt.Println("400 <= statusCode || statusCode < 500")
+            w.WriteHeader(http.StatusBadRequest)
+            json.NewEncoder(w).Encode(struct{Message string}{ Message: simpleMessage })
         case 500 <= statusCode || statusCode < 600:
+            fmt.Println("500 <= statusCode || statusCode < 600")
             w.WriteHeader(http.StatusInternalServerError)
-            json.NewEncoder(w).Encode(struct{message string}{ message: "Server error!" })
+            json.NewEncoder(w).Encode(struct{Message string}{ Message: "Server error!" })
         default: 
+            fmt.Println("default")
             w.WriteHeader(http.StatusInternalServerError)
-            json.NewEncoder(w).Encode(struct{message string}{ message: "!Fatal error!" })
+            json.NewEncoder(w).Encode(struct{Message string}{ Message: "!Fatal error!" })
     }
 }
 
 /*
     Ref: https://go.dev/src/net/http/status.go
 
-    StatusContinue           = 100 // RFC 7231, 6.2.1
-	StatusSwitchingProtocols = 101 // RFC 7231, 6.2.2
-	StatusProcessing         = 102 // RFC 2518, 10.1
-	StatusEarlyHints         = 103 // RFC 8297
+    StatusContinue             = 100 // RFC 7231, 6.2.1
+	StatusSwitchingProtocols   = 101 // RFC 7231, 6.2.2
+	StatusProcessing           = 102 // RFC 2518, 10.1
+	StatusEarlyHints           = 103 // RFC 8297
 
 	StatusOK                   = 200 // RFC 7231, 6.3.1
 	StatusCreated              = 201 // RFC 7231, 6.3.2
@@ -81,15 +84,15 @@ func respondToClient(w http.ResponseWriter, statusCode uint, edata interface{}, 
 	StatusAlreadyReported      = 208 // RFC 5842, 7.1
 	StatusIMUsed               = 226 // RFC 3229, 10.4.1
 
-	StatusMultipleChoices   = 300 // RFC 7231, 6.4.1
-	StatusMovedPermanently  = 301 // RFC 7231, 6.4.2
-	StatusFound             = 302 // RFC 7231, 6.4.3
-	StatusSeeOther          = 303 // RFC 7231, 6.4.4
-	StatusNotModified       = 304 // RFC 7232, 4.1
-	StatusUseProxy          = 305 // RFC 7231, 6.4.5
-	_                       = 306 // RFC 7231, 6.4.6 (Unused)
-	StatusTemporaryRedirect = 307 // RFC 7231, 6.4.7
-	StatusPermanentRedirect = 308 // RFC 7538, 3
+	StatusMultipleChoices      = 300 // RFC 7231, 6.4.1
+	StatusMovedPermanently     = 301 // RFC 7231, 6.4.2
+	StatusFound                = 302 // RFC 7231, 6.4.3
+	StatusSeeOther             = 303 // RFC 7231, 6.4.4
+	StatusNotModified          = 304 // RFC 7232, 4.1
+	StatusUseProxy             = 305 // RFC 7231, 6.4.5
+	_                          = 306 // RFC 7231, 6.4.6 (Unused)
+	StatusTemporaryRedirect    = 307 // RFC 7231, 6.4.7
+	StatusPermanentRedirect    = 308 // RFC 7538, 3
 
 	StatusBadRequest                   = 400 // RFC 7231, 6.5.1
 	StatusUnauthorized                 = 401 // RFC 7235, 3.1

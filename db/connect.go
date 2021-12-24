@@ -12,7 +12,7 @@ func Connect() (*gorm.DB, error) {
 	dbPswd := ""
 	dbHost := "127.0.0.1"
 	dbPort := "3306"
-	dbName := "hotel-management-db"
+	dbName := "victoria-bms-db"
 	
 	//dsn := "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPswd, dbHost, dbPort, dbName)

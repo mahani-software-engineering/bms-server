@@ -148,7 +148,7 @@ type User struct {
 
 type UserAction struct {
   gorm.Model
-  ActionNumber   string  `json:"actionNumber" gorm:"size:8"`
+  ActionNumber   string  `json:"actionNumber" gorm:"size:16"`
   UserID         uint    `json:"userid"`
   Description    string  `json:"description" gorm:"size:100"`
   OnEntity       string  `json:"onEntity" gorm:"size:20"`

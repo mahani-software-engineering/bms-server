@@ -2,15 +2,15 @@ package usecases
 
 
 import (
+    "fmt"
     "net/http"
-    "encoding/json"
-    "github.com/gorilla/mux"
+    //"github.com/gorilla/mux"
     "github.com/mahani-software-engineering/bms-server/db"
 )
 
 func CreateInvoice(w http.ResponseWriter, r *http.Request) {
-    params := mux.Vars(r)
-    customerId := params["id"]
+    //params := mux.Vars(r)
+    //customerId := params["id"]
     //if customer exists {
         //if (there are no existing orders where customerID is this customer's Id AND status is "pending"){
             //if (there are no arders sent in the request){
@@ -79,7 +79,7 @@ func CreateInvoice(w http.ResponseWriter, r *http.Request) {
 
 func invoiceExists (identifier string) (bool, db.Invoice, error) {
     //the identifier must be ID
-    invoice := db.Invoice
+    var invoice db.Invoice
     response := database.Where("id = ?", identifier).First(&invoice)                   
     numberOfRowsFound := response.RowsAffected
     exists := numberOfRowsFound > 0
@@ -87,16 +87,16 @@ func invoiceExists (identifier string) (bool, db.Invoice, error) {
 }
 
 func ReadInvoice(w http.ResponseWriter, r *http.Request) {
-    readOne(w, r, invoiceExists)
+    //readOne(w, r, invoiceExists)
 }
 
 func ReadAllInvoices(w http.ResponseWriter, r *http.Request) {
-    invoices := []db.Invoice
+    var invoices []db.Invoice
     response := database.Find(&invoices)
     numberOfRowsFound := response.RowsAffected
     exists := numberOfRowsFound > 0
     fmt.Println(numberOfRowsFound, "invoices exist =", exists)
-    msg := fmt.Sprintf("Found %s records", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
     respondToClient(w, 200, invoices, msg)
 }
 
