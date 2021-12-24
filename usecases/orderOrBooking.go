@@ -34,17 +34,14 @@ func UpdateOrderOrBooking(w http.ResponseWriter, r *http.Request) {
     respondToClient(w, 200, order, msg)
 }
 
-func orderExists (identifier string) (bool, db.OrderOrBooking, error) {
+func orderExists (identifier uint) (bool, db.OrderOrBooking, error) {
     //the identifier must be ID
     var order db.OrderOrBooking
-    if id, err := strconv.Atoi(identifier); err == nil {
-        response := database.Where("id = ?", uint(id)).First(&order)
-        numberOfRowsFound := response.RowsAffected
-        exists := numberOfRowsFound > 0
-        return exists, order, response.Error
-    }else{
-        return false, order, errors.New("order id must be a number")
-    } 
+    response := database.Where("id = ?", identifier).First(&order)                   
+    numberOfRowsFound := response.RowsAffected
+    exists := numberOfRowsFound > 0
+    fmt.Println(numberOfRowsFound, "order exists =", exists)
+    return exists, order, response.Error
 }
 
 func ReadOrderOrBooking(w http.ResponseWriter, r *http.Request) {

@@ -352,7 +352,6 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
             var recvdPmt ReceivedPayment
             var pmt db.Payment
 	        _ = json.NewDecoder(r.Body).Decode(&recvdPmt)
-	        _ = json.NewDecoder(r.Body).Decode(&pmt)
 	        
 	        //create an order first
 	        orderNew := db.OrderOrBooking{
@@ -361,20 +360,23 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	            Quantity:  recvdPmt.Order.Quantity,
 	            Status:    recvdPmt.Order.Status,
 	            Paid:      true,
-	            CreatedBy: pmt.CreatedBy,
-	            CustomerID: pmt.CustomerID,
+	            CreatedBy: recvdPmt.CreatedBy,
+	            CustomerID: recvdPmt.CustomerID,
 	            //Customer: {}, //ignored on creation
 	        }
-	        database.Omit("Customer").Create(&orderNew)
+	        database.Omit("Customer","CustomerID","VisitID","InvoiceID","BillID").Create(&orderNew)
 	        //ID of the newly created order = orderNew.ID
 	        pmt.ItemID = orderNew.ID
+	        pmt.Item   = recvdPmt.Item
+	        pmt.Amount = recvdPmt.Amount
+	        pmt.CustomerID = recvdPmt.CustomerID
 	        database.Omit("Customer").Create(&pmt)
 	        if orderNew.Item == "product" && orderNew.Status == "served" {
                 balanceStock(orderNew.ItemID, "remove", orderNew.Quantity)
             }
 	        //finished.
 	        
-	        specificActionDetails := fmt.Sprintf("Customer: %s, Ordered: %s",pmt.CustomerID, orderNew.ID)
+	        specificActionDetails := fmt.Sprintf("Customer: %d, Ordered: %d",pmt.CustomerID, orderNew.ID)
 	        newActionRecord(pmt.CreatedBy, "ACN0002/21", "Payment received, customer is registered, new customer info not needed, customer ordered for an item, item=order", "Payment", specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
@@ -383,29 +385,34 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
             var recvdPmt ReceivedPayment
             var pmt db.Payment
 	        _ = json.NewDecoder(r.Body).Decode(&recvdPmt)
-	        _ = json.NewDecoder(r.Body).Decode(&pmt)
 	        
 	        //create an order first
 	        invoiceNew := db.Invoice{
-	            Amount:    pmt.Amount,
+	            Amount:    recvdPmt.Amount,
 	            Status:    "paid",
-	            CreatedBy: pmt.CreatedBy,
+	            CreatedBy: recvdPmt.CreatedBy,
 	            Orders:    recvdPmt.Invoice.Orders,
-	            CustomerID: pmt.CustomerID,
+	            CustomerID: recvdPmt.CustomerID,
 	            //Customer: {}, //ignored on creation
 	        }
 	        //invoiceOrders := &invoiceNew.Orders
-            for _, order := range invoiceNew.Orders {
+            for k, order := range invoiceNew.Orders {
                 order.Paid = true
-                order.CustomerID = pmt.CustomerID
-                order.CreatedBy = pmt.CreatedBy
+                order.CustomerID = recvdPmt.CustomerID
+                order.CreatedBy = recvdPmt.CreatedBy
+                invoiceNew.Orders[k] = order
                 if order.Item == "product" && order.Status == "served" {
                     balanceStock(order.ItemID, "remove", order.Quantity)
                 }
             }
+            database.Table("order_or_bookings").Where("invoice_id = ?", invoiceNew.ID).Update("customer_id", recvdPmt.CustomerID)
+            
 	        database.Omit("Customer").Omit("Orders.Customer").Create(&invoiceNew)
 	        //ID of the newly created invoice = invoiceNew.ID
 	        pmt.ItemID = invoiceNew.ID
+	        pmt.Item   = recvdPmt.Item
+	        pmt.Amount = recvdPmt.Amount
+	        pmt.CustomerID = recvdPmt.CustomerID
 	        database.Omit("Customer").Create(&pmt)
 	        //finished.
 	        
@@ -418,35 +425,40 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
             var recvdPmt ReceivedPayment
             var pmt db.Payment
 	        _ = json.NewDecoder(r.Body).Decode(&recvdPmt)
-	        _ = json.NewDecoder(r.Body).Decode(&pmt)
 	        
 	        //create an order first
 	        billNew := db.Bill{
-	            Amount:    pmt.Amount,
+	            Amount:    recvdPmt.Amount,
 	            Status:    "paid",
-	            CreatedBy: pmt.CreatedBy,
+	            CreatedBy: recvdPmt.CreatedBy,
 	            Orders:    recvdPmt.Invoice.Orders,
 	            Invoices:  recvdPmt.Bill.Invoices,
-	            CustomerID: pmt.CustomerID,
+	            CustomerID: recvdPmt.CustomerID,
 	            //Customer: {}, //ignored on creation
 	        }
 	        //billOrders := &billNew.Orders
-            for _, order := range billNew.Orders {
+            for k, order := range billNew.Orders {
                 order.Status = "billed"
                 order.Paid = true
-                order.CustomerID = pmt.CustomerID
-                order.CreatedBy = pmt.CreatedBy
+                order.CustomerID = recvdPmt.CustomerID
+                order.CreatedBy = pmrecvdPmtt.CreatedBy
+                billNew.Orders[k] = order
                 if order.Item == "product" {
                     balanceStock(order.ItemID, "remove", order.Quantity)
                 }
             }
-	        database.Omit("Customer").Omit("Orders.Customer").Create(&billNew)
+            database.Table("order_or_bookings").Where("bill_id = ?", billNew.ID).Update("customer_id", recvdPmt.CustomerID)
+            
+	        database.Omit("Customer","Orders.Customer").Create(&billNew)
 	        //ID of the newly created invoice = billNew.ID
 	        pmt.ItemID = billNew.ID
+	        pmt.Item   = recvdPmt.Item
+	        pmt.Amount = recvdPmt.Amount
+	        pmt.CustomerID = recvdPmt.CustomerID
 	        database.Omit("Customer").Create(&pmt)
 	        //finished.
 	        
-	        specificActionDetails := fmt.Sprintf("Customer: %s, Ordered: %s",pmt.CustomerID, billNew.ID)
+	        specificActionDetails := fmt.Sprintf("Customer: %d Ordered: %d",pmt.CustomerID, billNew.ID)
 	        newActionRecord(pmt.CreatedBy, "ACN0002/23", "Payment received, customer is registered, new customer info not needed, customer ordered for an item, item=bill", "Payment", specificActionDetails)     
 	        respondToClient(w, 201, pmt, "Payment recorded successfully")
 	        //done.
@@ -459,7 +471,7 @@ func UpdatePayment(w http.ResponseWriter, r *http.Request) {
     //TODO: implement
 }
 
-func paymentExists (identifier string) (bool, db.Payment, error) {
+func paymentExists (identifier uint) (bool, db.Payment, error) {
     //the identifier must be ID
     var payment db.Payment
     response := database.Where("id = ?", identifier).First(&payment)                   
