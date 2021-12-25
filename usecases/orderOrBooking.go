@@ -3,8 +3,6 @@ package usecases
 
 import (
     "fmt"
-    "errors"
-    "strconv"
     "net/http"
     "encoding/json"
     "github.com/gorilla/mux"
@@ -16,8 +14,9 @@ func CreateOrderOrBooking(w http.ResponseWriter, r *http.Request) {
 }
 
 type OrderNewStatus struct {
-    OrderID uint     `json:"orderid"` 
-    NewStatus string `json:"newstatus"`
+    OrderID    uint     `json:"orderid"` 
+    NewStatus  string   `json:"newstatus"`
+    UpdatedBy  uint     `json:"updatedby"`
 }
 
 func UpdateOrderOrBooking(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +26,7 @@ func UpdateOrderOrBooking(w http.ResponseWriter, r *http.Request) {
     database.Model(&order).Where("id = ?", updates.OrderID).Update("status", updates.NewStatus)
     //balance stock
     if (order.Item == "product") && (order.Status == "served" || order.Status == "billed") && order.Paid {
-        balanceStock(order.ItemID, "remove", order.Quantity)
+        balanceStock(order.ItemID, "remove", order.Quantity, updates.UpdatedBy)
     }
     //respond
     msg := fmt.Sprintf("Updated order status to %s", updates.NewStatus)
@@ -99,11 +98,8 @@ func ReadOrdersByBill(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadCountOrdersOrBookings(w http.ResponseWriter, r *http.Request) {
-    fmt.Println("orders count ...")
-    params := mux.Vars(r)
-    billId := params["id"]
     var orders []db.OrderOrBooking
-    response := database.Where("bill_id = ?", billId).Find(&orders)
+    response := database.Find(&orders)
     numberOfRowsFound := response.RowsAffected
     msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
     fmt.Println("ReadCountOrdersOrBookings -> numberOfRowsFound=",numberOfRowsFound)

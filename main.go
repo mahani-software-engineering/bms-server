@@ -104,6 +104,8 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/stock/update/{id}", uc.UpdateStockTransaction).Methods("PUT")
 	router.HandleFunc("/stock/read/{id}", uc.ReadStockTransaction).Methods("GET")
 	router.HandleFunc("/stock/transactions", uc.ReadAllStockTransactions).Methods("GET")
+	router.HandleFunc("/sales/ledger", uc.ReadStockTxnsForBarner).Methods("GET")
+	
 	
 	//Expense
 	router.HandleFunc("/expense", uc.CreateExpense).Methods("POST")

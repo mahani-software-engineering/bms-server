@@ -1,24 +1,24 @@
 {
   "files": {
     "main.css": "./static/css/main.5a95d6f5.chunk.css",
-    "main.js": "./static/js/main.6dd65eb0.chunk.js",
-    "main.js.map": "./static/js/main.6dd65eb0.chunk.js.map",
+    "main.js": "./static/js/main.4079089d.chunk.js",
+    "main.js.map": "./static/js/main.4079089d.chunk.js.map",
     "runtime-main.js": "./static/js/runtime-main.fc5f5190.js",
     "runtime-main.js.map": "./static/js/runtime-main.fc5f5190.js.map",
-    "static/js/2.7fe72ff1.chunk.js": "./static/js/2.7fe72ff1.chunk.js",
-    "static/js/2.7fe72ff1.chunk.js.map": "./static/js/2.7fe72ff1.chunk.js.map",
+    "static/js/2.9e177661.chunk.js": "./static/js/2.9e177661.chunk.js",
+    "static/js/2.9e177661.chunk.js.map": "./static/js/2.9e177661.chunk.js.map",
     "static/js/3.091b02e9.chunk.js": "./static/js/3.091b02e9.chunk.js",
     "static/js/3.091b02e9.chunk.js.map": "./static/js/3.091b02e9.chunk.js.map",
     "index.html": "./index.html",
     "static/css/main.5a95d6f5.chunk.css.map": "./static/css/main.5a95d6f5.chunk.css.map",
-    "static/js/2.7fe72ff1.chunk.js.LICENSE.txt": "./static/js/2.7fe72ff1.chunk.js.LICENSE.txt",
+    "static/js/2.9e177661.chunk.js.LICENSE.txt": "./static/js/2.9e177661.chunk.js.LICENSE.txt",
     "static/media/cropped-victoria-forest-logo.686d00be.png": "./static/media/cropped-victoria-forest-logo.686d00be.png",
     "static/media/my_pic_white.1063ca20.png": "./static/media/my_pic_white.1063ca20.png"
   },
   "entrypoints": [
     "static/js/runtime-main.fc5f5190.js",
-    "static/js/2.7fe72ff1.chunk.js",
+    "static/js/2.9e177661.chunk.js",
     "static/css/main.5a95d6f5.chunk.css",
-    "static/js/main.6dd65eb0.chunk.js"
+    "static/js/main.4079089d.chunk.js"
   ]
 }

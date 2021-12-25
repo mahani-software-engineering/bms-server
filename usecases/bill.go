@@ -3,8 +3,9 @@ package usecases
 
 import (
     "fmt"
+    "strconv"
     "net/http"
-    //"github.com/gorilla/mux"
+    "github.com/gorilla/mux"
     "github.com/mahani-software-engineering/bms-server/db"
 )
 
@@ -85,7 +86,7 @@ func CreateBill(w http.ResponseWriter, r *http.Request) {
   //}
 }
 
-func billExists (identifier string) (bool, db.Bill, error) {
+func billExists (identifier uint) (bool, db.Bill, error) {
     //the identifier must be ID
     var bill db.Bill
     response := database.Where("id = ?", identifier).First(&bill)                   
@@ -95,7 +96,23 @@ func billExists (identifier string) (bool, db.Bill, error) {
 }
 
 func ReadBill(w http.ResponseWriter, r *http.Request) {
-    //readOne(w, r, billExists)
+    w.Header().Set("Content-Type","application/json")
+    params := mux.Vars(r)
+    identf := params["id"]
+    if identifier, err := strconv.Atoi(identf); err == nil {
+        ok, bill, err := billExists(uint(identifier))
+        if err != nil {
+            respondToClient(w, 400, nil, err.Error())
+        }
+        
+        if !ok {
+            respondToClient(w, 404, nil, "Specified bill record not found")
+        }
+        
+        respondToClient(w, 200, bill, "")
+    }else{
+        respondToClient(w, 403, nil, "Invalid bill identifier")
+    }
 }
 
 func ReadAllBills(w http.ResponseWriter, r *http.Request) {

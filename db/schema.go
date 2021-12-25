@@ -10,7 +10,8 @@ type Service struct {
   Category           string  `json:"category" gorm:"size:40"`
   Availability       bool    `json:"availability" gorm:"default:true"`
   Price              uint    `json:"price"`
-  ServiceProviderID  uint    `json:"serviceproviderid"`
+  ServiceProviderID  uint    `json:"provider"`
+  CreatedBy          uint    `json:"createdby"`
 }
 
 type Product struct {
@@ -23,6 +24,7 @@ type Product struct {
   Quantity         uint    `json:"quantity"`                     //450
   QuantityUnits    string  `json:"quantityUnits" gorm:"size:20"` //crates
   SupplierID       uint    `json:"supplierid"`
+  CreatedBy        uint    `json:"createdby"`
 }  
 
 type PackageProduct struct {
@@ -47,12 +49,14 @@ type Package struct {
   Price         uint              `json:"price"`
   Products      []PackageProduct  `json:"products"`
   Services      []PackageService  `json:"services"`
+  CreatedBy   uint     `json:"createdby"`
 }
 
 type Visit struct {
   gorm.Model
   Customer    User     `json:"customer" gorm:"foreignKey:CustomerID;references:id"`
   CustomerID  uint     `json:"customerid"`
+  CreatedBy   uint     `json:"createdby"`
 }
 
 type OrderOrBooking struct {
@@ -106,13 +110,14 @@ type Payment struct {
 
 type StockTransaction struct {
   gorm.Model
-  Transaction      string  `json:"transaction" gorm:"size:8"`        //add, remove,
+  Transaction      string   `json:"transaction" gorm:"size:8"`         //add, remove,
   ProductCategory   string  `json:"productCategory" gorm:"size:150"`   //
   ProductID         uint    `json:"productid"`
   OldQuantity       uint    `json:"oldQuantity"`
   Quantity          uint    `json:"quantity"`
   NewQuantity       uint    `json:"newQuantity"`
   Returned          bool    `json:"returned" gorm:"default:false"`     //true/false
+  Amount            uint    `json:"amount"`
   CreatedBy         uint    `json:"createdby"`
 }
 
@@ -139,6 +144,7 @@ type User struct {
   IdentityCardType   string         `json:"idtype" gorm:"default:EMPLOYEE_ID" gorm:"size:20"`
   Nationality        string         `json:"nationality" gorm:"size:50"`
   AccessRights       uint           `json:"accessRights"`
+  CreatedBy          uint     `json:"createdby"`
   Invoices           []Invoice      `json:"invoices" gorm:"foreignKey:CustomerID;references:id;->"`
   Bills              []Bill         `json:"bills" gorm:"foreignKey:CustomerID;references:id;->"`
   Messages           []Message      `json:"messages" gorm:"foreignKey:UserID;references:id;->"`
@@ -160,6 +166,7 @@ type Message struct {
   Text       string
   Read       bool
   UserID     uint
+  CreatedBy   uint     `json:"createdby"`
 }
 
 type Notification struct {
@@ -167,6 +174,7 @@ type Notification struct {
   Message    string
   Read       bool
   UserID     uint
+  CreatedBy  uint     `json:"createdby"`
 }
 
 

@@ -47,12 +47,14 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	
     var user db.User
     
-    result := database.First(&user, "username = ?", credentials.Username)
+    result := database.Where("username = ? AND password = ?", credentials.Username, credentials.Password).First(&user)
     rows := result.RowsAffected
     if rows > 0 {
+        fmt.Println("Signed in succeffully.")
         //newActionRecord(r, "ACN0003", "Signed in", "user", credentials.Username)
-        respondToClient(w, 200, user, "Signed in succeffully.")    
+        respondToClient(w, 200, user, "Sign in succeffully.")    
     }else{
+        fmt.Println("Signed in failed.")
         //newActionRecord(r, "ACN03", "Attempted (failed) signing in", "user", "N/A", "")
         respondToClient(w, 403, nil, "Access denied.")
     }

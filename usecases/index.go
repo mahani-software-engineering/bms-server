@@ -36,7 +36,6 @@ func readOne(w http.ResponseWriter, r *http.Request, existsFunc func(string)(boo
 
 func respondToClient(w http.ResponseWriter, statusCode uint, edata interface{}, simpleMessage string){
     w.Header().Set("Content-Type","application/json")
-    fmt.Printf("respondToClient: edata=%v, statusCode=%v, simpleMessage=%s\n",edata,statusCode,simpleMessage)
     switch {
         case 200 <= statusCode || statusCode < 300:
             fmt.Println("200 <= statusCode || statusCode < 300")

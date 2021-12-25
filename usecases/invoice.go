@@ -3,8 +3,9 @@ package usecases
 
 import (
     "fmt"
+    "strconv"
     "net/http"
-    //"github.com/gorilla/mux"
+    "github.com/gorilla/mux"
     "github.com/mahani-software-engineering/bms-server/db"
 )
 
@@ -77,7 +78,7 @@ func CreateInvoice(w http.ResponseWriter, r *http.Request) {
   //}
 }
 
-func invoiceExists (identifier string) (bool, db.Invoice, error) {
+func invoiceExists (identifier uint) (bool, db.Invoice, error) {
     //the identifier must be ID
     var invoice db.Invoice
     response := database.Where("id = ?", identifier).First(&invoice)                   
@@ -87,7 +88,23 @@ func invoiceExists (identifier string) (bool, db.Invoice, error) {
 }
 
 func ReadInvoice(w http.ResponseWriter, r *http.Request) {
-    //readOne(w, r, invoiceExists)
+    w.Header().Set("Content-Type","application/json")
+    params := mux.Vars(r)
+    identf := params["id"]
+    if identifier, err := strconv.Atoi(identf); err == nil {
+        ok, invoice, err := invoiceExists(uint(identifier))
+        if err != nil {
+            respondToClient(w, 400, nil, err.Error())
+        }
+        
+        if !ok {
+            respondToClient(w, 404, nil, "Specified invoice record not found")
+        }
+        
+        respondToClient(w, 200, invoice, "")
+    }else{
+        respondToClient(w, 403, nil, "Invalid invoice identifier")
+    }
 }
 
 func ReadAllInvoices(w http.ResponseWriter, r *http.Request) {

@@ -3,6 +3,7 @@ package usecases
 
 import (
     "fmt"
+    "strconv"
     "net/http"
     "encoding/json"
     "github.com/gorilla/mux"
@@ -64,7 +65,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	        pmt.CreatedBy = recvdPmt.CreatedBy
 	        database.Omit("Customer","CustomerID").Create(&pmt)
 	        if recvdPmt.Order.Item == "product" && orderNew.Status == "served" {
-	            balanceStock(recvdPmt.Order.ItemID, "remove", recvdPmt.Order.Quantity)
+	            balanceStock(recvdPmt.Order.ItemID, "remove", recvdPmt.Order.Quantity, recvdPmt.CreatedBy)
 	        }
 	        //finished.
 	        
@@ -92,7 +93,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
                 order.CreatedBy = recvdPmt.CreatedBy
                 invoiceNew.Orders[k] = order
                 if order.Item == "product" && order.Status == "served" {
-	                balanceStock(order.ItemID, "remove", order.Quantity)
+	                balanceStock(order.ItemID, "remove", order.Quantity, recvdPmt.CreatedBy)
 	            }
             }
 	        database.Omit("Customer","CustomerID","Orders.Customer", "Orders.CustomerID","Orders.VisitID","Orders.BillID").Create(&invoiceNew)
@@ -131,7 +132,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
                 order.CreatedBy = recvdPmt.CreatedBy
                 billNew.Orders[k] = order
                 if order.Item == "product" {
-	                balanceStock(order.ItemID, "remove", order.Quantity)
+	                balanceStock(order.ItemID, "remove", order.Quantity, recvdPmt.CreatedBy)
 	            }
             }
 	        database.Omit("Customer","CustomerID","Orders.Customer","Orders.CustomerID","Orders.VisitID","Orders.InvoiceID").Create(&billNew)
@@ -200,7 +201,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	        //now ready to update the orderNew in the database
 	        database.Save(&orderNew)
 	        if orderNew.Item == "product" && orderNew.Status == "served" {
-                balanceStock(orderNew.ItemID, "remove", orderNew.Quantity)
+                balanceStock(orderNew.ItemID, "remove", orderNew.Quantity, recvdPmt.CreatedBy)
             }
 	        //finished.
 	        
@@ -228,7 +229,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
                 order.CreatedBy = recvdPmt.CreatedBy
                 invoiceNew.Orders[k] = order
                 if order.Item == "product" && order.Status == "served" {
-                    balanceStock(order.ItemID, "remove", order.Quantity)
+                    balanceStock(order.ItemID, "remove", order.Quantity, recvdPmt.CreatedBy)
                 }
             }
 	        database.Omit("Customer","CustomerID","Orders.Customer","Orders.CustomerID","Orders.VisitID","Orders.BillID").Create(&invoiceNew)
@@ -279,7 +280,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
                 order.CreatedBy = recvdPmt.CreatedBy
                 billNew.Orders[k] = order
                 if order.Item == "product" {
-                    balanceStock(order.ItemID, "remove", order.Quantity)
+                    balanceStock(order.ItemID, "remove", order.Quantity, recvdPmt.CreatedBy)
                 }
             }
             
@@ -323,7 +324,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	            respondToClient(w, 428, pmt, "Specified customer not found. Please register first")
 	        }
 	        
-	        ook, order, errr := orderExists(fmt.Sprintf("%s",pmt.ItemID))
+	        ook, order, errr := orderExists(pmt.ItemID)
 	        if errr != nil {
 	            fmt.Printf("Can't find the specified %s item.\n",pmt.Item)
 	        }
@@ -337,7 +338,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	        order.CustomerID = pmt.CustomerID
 	        database.Save(&order)
 	        if order.Item == "product" && order.Status == "served" {
-                balanceStock(order.ItemID, "remove", order.Quantity)
+                balanceStock(order.ItemID, "remove", order.Quantity, pmt.CreatedBy)
             }
 	        
 	        database.Omit("Customer").Create(&pmt)
@@ -364,15 +365,16 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	            CustomerID: recvdPmt.CustomerID,
 	            //Customer: {}, //ignored on creation
 	        }
-	        database.Omit("Customer","CustomerID","VisitID","InvoiceID","BillID").Create(&orderNew)
+	        database.Omit("Customer","VisitID","InvoiceID","BillID").Create(&orderNew)
 	        //ID of the newly created order = orderNew.ID
 	        pmt.ItemID = orderNew.ID
 	        pmt.Item   = recvdPmt.Item
 	        pmt.Amount = recvdPmt.Amount
 	        pmt.CustomerID = recvdPmt.CustomerID
+	        pmt.CreatedBy = recvdPmt.CreatedBy
 	        database.Omit("Customer").Create(&pmt)
 	        if orderNew.Item == "product" && orderNew.Status == "served" {
-                balanceStock(orderNew.ItemID, "remove", orderNew.Quantity)
+                balanceStock(orderNew.ItemID, "remove", orderNew.Quantity, recvdPmt.CreatedBy)
             }
 	        //finished.
 	        
@@ -402,17 +404,16 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
                 order.CreatedBy = recvdPmt.CreatedBy
                 invoiceNew.Orders[k] = order
                 if order.Item == "product" && order.Status == "served" {
-                    balanceStock(order.ItemID, "remove", order.Quantity)
+                    balanceStock(order.ItemID, "remove", order.Quantity, recvdPmt.CreatedBy)
                 }
             }
-            database.Table("order_or_bookings").Where("invoice_id = ?", invoiceNew.ID).Update("customer_id", recvdPmt.CustomerID)
-            
-	        database.Omit("Customer").Omit("Orders.Customer").Create(&invoiceNew)
+	        database.Omit("Customer","Orders.Customer","Orders.VisitID","Orders.BillID").Create(&invoiceNew)
 	        //ID of the newly created invoice = invoiceNew.ID
 	        pmt.ItemID = invoiceNew.ID
 	        pmt.Item   = recvdPmt.Item
 	        pmt.Amount = recvdPmt.Amount
 	        pmt.CustomerID = recvdPmt.CustomerID
+	        pmt.CreatedBy = recvdPmt.CreatedBy
 	        database.Omit("Customer").Create(&pmt)
 	        //finished.
 	        
@@ -431,7 +432,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	            Amount:    recvdPmt.Amount,
 	            Status:    "paid",
 	            CreatedBy: recvdPmt.CreatedBy,
-	            Orders:    recvdPmt.Invoice.Orders,
+	            Orders:    recvdPmt.Bill.Orders,
 	            Invoices:  recvdPmt.Bill.Invoices,
 	            CustomerID: recvdPmt.CustomerID,
 	            //Customer: {}, //ignored on creation
@@ -441,20 +442,19 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
                 order.Status = "billed"
                 order.Paid = true
                 order.CustomerID = recvdPmt.CustomerID
-                order.CreatedBy = pmrecvdPmtt.CreatedBy
+                order.CreatedBy = recvdPmt.CreatedBy
                 billNew.Orders[k] = order
                 if order.Item == "product" {
-                    balanceStock(order.ItemID, "remove", order.Quantity)
+                    balanceStock(order.ItemID, "remove", order.Quantity, recvdPmt.CreatedBy)
                 }
             }
-            database.Table("order_or_bookings").Where("bill_id = ?", billNew.ID).Update("customer_id", recvdPmt.CustomerID)
-            
-	        database.Omit("Customer","Orders.Customer").Create(&billNew)
+	        database.Omit("Customer","Orders.Customer","Orders.VisitID","Orders.InvoiceID").Create(&billNew)
 	        //ID of the newly created invoice = billNew.ID
 	        pmt.ItemID = billNew.ID
 	        pmt.Item   = recvdPmt.Item
 	        pmt.Amount = recvdPmt.Amount
 	        pmt.CustomerID = recvdPmt.CustomerID
+	        pmt.CreatedBy = recvdPmt.CreatedBy
 	        database.Omit("Customer").Create(&pmt)
 	        //finished.
 	        
@@ -482,39 +482,37 @@ func paymentExists (identifier uint) (bool, db.Payment, error) {
 }
 
 func ReadPayment(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type","application/json")
     params := mux.Vars(r)
     identf := params["id"]
-    //ensure that the identifier is converted to string if it's not one
-    identifier := fmt.Sprintf("%s", identf)
-    
-    ok, payment, err := paymentExists(identifier)
-    if err != nil {
-        respondToClient(w, 400, nil, err.Error())
+    if identifier, err := strconv.Atoi(identf); err == nil {
+        ok, payment, err := paymentExists(uint(identifier))
+        if err != nil {
+            respondToClient(w, 400, nil, err.Error())
+        }
+        
+        if !ok {
+            respondToClient(w, 404, nil, "Specified payment record not found")
+        }
+        
+        respondToClient(w, 200, payment, "")
+    }else{
+        respondToClient(w, 403, nil, "Invalid payment identifier")
     }
-    
-    if !ok {
-        respondToClient(w, 404, nil, "Specified payment record not found")
-    }
-    
-    respondToClient(w, 200, payment, "")
 }
 
 func ReadAllPayments(w http.ResponseWriter, r *http.Request) {
-    fmt.Println("Allpayments read ...")
     var payments []db.Payment
     response := database.Find(&payments)
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d payments", numberOfRowsFound)
     respondToClient(w, 200, payments, msg)
 }
 
 func ReadCountPayments(w http.ResponseWriter, r *http.Request) {
-    fmt.Println("Payments count ...")
     var payments []db.Payment
     response := database.Find(&payments)
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
+    msg := fmt.Sprintf("Counted %d payments", numberOfRowsFound)
     respondToClient(w, 200, numberOfRowsFound, msg)
 }
 

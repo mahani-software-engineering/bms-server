@@ -12,8 +12,8 @@ func CreateExpense(w http.ResponseWriter, r *http.Request) {
     var expense db.Expense
     _ = json.NewDecoder(r.Body).Decode(&expense)
     database.Create(&expense)
-    msg := fmt.Sprintf("New expense recorded, ID: %s", expense.ID)
-    respondToClient(w, 200, expense, msg)
+    msg := fmt.Sprintf("New expense recorded")
+    respondToClient(w, 201, expense, msg)
 }
 
 func UpdateExpense(w http.ResponseWriter, r *http.Request) {
@@ -44,15 +44,13 @@ func ReadAllExpenses(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadCountExpenses(w http.ResponseWriter, r *http.Request) {
-    fmt.Println("expenses count ...")
     var expenses []db.Expense
-    response := database.Find(&expenses)
-    numberOfRowsFound := response.RowsAffected
-    exists := numberOfRowsFound > 0
-    fmt.Println(numberOfRowsFound, "expenses exist =", exists)
-    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
-    fmt.Println("ReadCountExpenses -> numberOfRowsFound=",numberOfRowsFound)
-    respondToClient(w, 200, numberOfRowsFound, msg)
+    _ = database.Find(&expenses)
+    var totalAmount uint
+    for _, exp := range expenses {
+        totalAmount = totalAmount + exp.Amount
+    }
+    respondToClient(w, 200, totalAmount, "")
 }
 
 
