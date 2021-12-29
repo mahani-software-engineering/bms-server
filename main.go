@@ -126,6 +126,8 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/notification/{id}", uc.UpdateNotification).Methods("PUT")
 	router.HandleFunc("/notification/{id}", uc.ReadNotification).Methods("GET")
 	router.HandleFunc("/notification", uc.ReadAllNotifications).Methods("GET")
+	//options
+	router.HandleFunc("/options/{entity}", uc.ReadInputOptions).Methods("GET")
 	//Home
 	router.HandleFunc("/", index ).Methods("POST")
 	router.PathPrefix("/").Handler( http.FileServer(http.FS(website)) ).Methods("GET")

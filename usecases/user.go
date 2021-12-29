@@ -7,6 +7,7 @@ import (
     "strconv"
     "net/http"
     "encoding/json"
+    "github.com/gorilla/mux"
     "github.com/mahani-software-engineering/bms-server/db"
 )
 
@@ -47,7 +48,7 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	
     var user db.User
     
-    result := database.Where("username = ? AND password = ?", credentials.Username, credentials.Password).First(&user)
+    result := database.Where("(username = ? OR phone = ? OR email = ?) AND password = ?", credentials.Username, credentials.Username, credentials.Username, credentials.Password).First(&user)
     rows := result.RowsAffected
     if rows > 0 {
         fmt.Println("Signed in succeffully.")
@@ -82,7 +83,19 @@ func userExists (identifier string) (bool, db.User, error) {
 }
 
 func ReadUser(w http.ResponseWriter, r *http.Request) {
-    //readOne(w, r, userExists)
+    params := mux.Vars(r)
+    identifier := params["id"]
+    
+    ok, user, err := userExists(identifier)
+    if err != nil {
+        respondToClient(w, 400, nil, err.Error())
+    }
+    
+    if !ok {
+        respondToClient(w, 404, nil, "Specified payment record not found")
+    }
+    
+    respondToClient(w, 200, user, "")
 }
 
 func ReadAllUsers(w http.ResponseWriter, r *http.Request) {
