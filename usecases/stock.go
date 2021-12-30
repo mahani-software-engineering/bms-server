@@ -114,17 +114,16 @@ func ReadStockTxnsForBarner(w http.ResponseWriter, r *http.Request){
       Openingstock     uint    `json:"openingstock"`  //txn.OldQuantity
       Newstock         uint    `json:"newstock"`      //txn.Quantity(add), 
       Sales            uint    `json:"sales"`         //txn.Quantity(remove),	
+      Rate             uint    `json:"rate"`        	
       ClosingStock     uint    `json:"closingstock"`  //txn.NewQuantity,	
       Revenue          uint    `json:"revenue"`       //txn.Amount
     }
     
     var ledgerRecords []StockLedgerRecord
-    //subTable1 := database.Model(&db.StockTransaction{}).Where("transaction = ?", "remove").Select("product_id, created_at, year(created_at) as yyyy, month(created_at) as mm, day(created_at) as dd, product_category as commodity, old_quantity as openingstock, sum(quantity) as sales, new_quantity as closingstock, sum(amount) as revenue").Group("product_id, day(created_at)")      
-    //subTable2 := database.Model(&db.StockTransaction{}).Where("transaction = ?", "add").Select("product_id as pid, created_at as at, sum(quantity) as newstock").Group("product_id, day(created_at)")
     subTable1 := database.Model(&db.StockTransaction{}).Where("transaction = ?", "remove").Select("product_id, created_at, year(created_at) as yyyy, month(created_at) as mm, day(created_at) as dd, product_category as commodity, old_quantity as openingstock, sum(quantity) as sales, new_quantity as closingstock, sum(amount) as revenue").Group("product_id")      
     subTable2 := database.Model(&db.StockTransaction{}).Where("transaction = ?", "add").Select("product_id as pid, created_at as at, sum(quantity) as newstock").Group("product_id")
     joinedTable := database.Table("(?) as s",subTable1).Joins("JOIN (?) as p on p.pid=s.product_id",subTable2)
-    database.Table("(?) as t",joinedTable).Joins("JOIN products on products.id=t.product_id").Select("t.*, products.quantity_units as units").Find(&ledgerRecords)
+    database.Table("(?) as t",joinedTable).Joins("JOIN products on products.id=t.product_id").Select("t.*, products.quantity_units as units, products.price as rate").Find(&ledgerRecords)
     
     respondToClient(w, 200, ledgerRecords, "")
 }   

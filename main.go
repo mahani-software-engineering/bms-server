@@ -39,6 +39,12 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/user/rights/{id}", uc.AssignUserRights).Methods("PUT")
 	router.HandleFunc("/user/read/{id}", uc.ReadUser).Methods("GET")
 	router.HandleFunc("/user/read", uc.ReadAllUsers).Methods("GET")
+	router.HandleFunc("/customers/count", uc.ReadCountCustomers).Methods("GET")
+	router.HandleFunc("/customer", uc.ReadAllCustomers).Methods("GET")
+	router.HandleFunc("/guests/count", uc.ReadCountGuests).Methods("GET")
+	router.HandleFunc("/guest", uc.ReadAllGuests).Methods("GET")
+	
+	
 	//router.Path("/user/read").Queries("skip", "{skip}").HandlerFunc(uc.ReadAllUsers).Name("pagenation").Methods("GET")
 	//Product
 	router.HandleFunc("/product", uc.CreateProduct).Methods("POST")
@@ -89,6 +95,7 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/payment/{id}", uc.UpdatePayment).Methods("PUT")
 	router.HandleFunc("/payment/{id}", uc.ReadPayment).Methods("GET")
 	router.HandleFunc("/payments/count", uc.ReadCountPayments).Methods("GET")
+	router.HandleFunc("/payments/sum", uc.ReadPaymentsTotalAmount).Methods("GET")
 	router.HandleFunc("/payment", uc.ReadAllPayments).Methods("GET")
 	//Invoice
 	router.HandleFunc("/invoice/{id}", uc.CreateInvoice).Methods("POST")
@@ -112,7 +119,7 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/expense/{id}", uc.UpdateExpense).Methods("PUT")
 	router.HandleFunc("/expense/{id}", uc.ReadExpense).Methods("GET")
 	router.HandleFunc("/expense", uc.ReadAllExpenses).Methods("GET")
-	router.HandleFunc("/expenses/count", uc.ReadCountExpenses).Methods("GET")
+	router.HandleFunc("/expenses/sum", uc.ReadExpensesTotalAmount).Methods("GET")
 	//UserAction
 	router.HandleFunc("/activity/{id}", uc.ReadUserAction).Methods("GET")
 	router.HandleFunc("/activity", uc.ReadAllUserActions).Methods("GET")

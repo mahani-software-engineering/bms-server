@@ -102,9 +102,53 @@ func ReadAllUsers(w http.ResponseWriter, r *http.Request) {
     var users []db.User
     response := database.Find(&users)
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %s records", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %s users", numberOfRowsFound)
     respondToClient(w, 200, users, msg)
 }
+
+func ReadAllCustomers(w http.ResponseWriter, r *http.Request) {
+    var users []db.User
+    response := database.Where("user_type = ?", "customer").Find(&users)
+    numberOfRowsFound := response.RowsAffected
+    msg := fmt.Sprintf("Found %s customers", numberOfRowsFound)
+    respondToClient(w, 200, users, msg)
+}
+
+func ReadCountCustomers(w http.ResponseWriter, r *http.Request) {
+    var users []db.User
+    response := database.Where("user_type = ?", "customer").Find(&users)
+    numberOfRowsFound := response.RowsAffected
+    msg := fmt.Sprintf("Found %s customers", numberOfRowsFound)
+    respondToClient(w, 200, numberOfRowsFound, msg)
+}
+
+func ReadAllGuests(w http.ResponseWriter, r *http.Request) {
+    var guests []db.User
+    
+    subTable1 := database.Model(&db.Package{}).Where("category = ?", "guests").Select("id as packageid")     
+    subTable2 := database.Model(&db.OrderOrBooking{}).Where("item = ?", "package").Select("item_id as packageid, customer_id")
+    joinedTable := database.Table("(?) as p",subTable1).Joins("JOIN (?) as o on p.packageid=o.packageid",subTable2).Select("o.customer_id").Group("o.customer_id")
+    response := database.Table("users").Joins("JOIN (?) as csm on csm.customer_id=users.id", joinedTable).Select("users.*").Find(&guests)
+    
+    numberOfRowsFound := response.RowsAffected
+    msg := fmt.Sprintf("Found %s guests", numberOfRowsFound)
+    respondToClient(w, 200, guests, msg)
+}
+
+func ReadCountGuests(w http.ResponseWriter, r *http.Request) {
+    var guests []db.User
+    
+    subTable1 := database.Model(&db.Package{}).Where("category = ?", "guests").Select("id as packageid")     
+    subTable2 := database.Model(&db.OrderOrBooking{}).Where("item = ?", "package").Select("item_id as packageid, customer_id")
+    joinedTable := database.Table("(?) as p",subTable1).Joins("JOIN (?) as o on p.packageid=o.packageid",subTable2).Select("o.customer_id").Group("o.customer_id")
+    response := database.Table("users").Joins("JOIN (?) as csm on csm.customer_id=users.id", joinedTable).Select("users.*").Find(&guests)
+    
+    numberOfRowsFound := response.RowsAffected
+    msg := fmt.Sprintf("Found %s guests", numberOfRowsFound)
+    respondToClient(w, 200, numberOfRowsFound, msg)
+}
+
+    
 
 
 

@@ -516,6 +516,16 @@ func ReadCountPayments(w http.ResponseWriter, r *http.Request) {
     respondToClient(w, 200, numberOfRowsFound, msg)
 }
 
+func ReadPaymentsTotalAmount(w http.ResponseWriter, r *http.Request) {
+    var payments []db.Payment
+    _ = database.Find(&payments)
+    var totalAmount uint
+    for _, pmt := range payments {
+        totalAmount = totalAmount + pmt.Amount
+    }
+    respondToClient(w, 200, totalAmount, "")
+}
+
 
 
 

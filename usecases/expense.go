@@ -43,7 +43,7 @@ func ReadAllExpenses(w http.ResponseWriter, r *http.Request) {
     respondToClient(w, 200, expenses, msg)
 }
 
-func ReadCountExpenses(w http.ResponseWriter, r *http.Request) {
+func ReadExpensesTotalAmount(w http.ResponseWriter, r *http.Request) {
     var expenses []db.Expense
     _ = database.Find(&expenses)
     var totalAmount uint

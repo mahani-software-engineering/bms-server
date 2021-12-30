@@ -44,7 +44,7 @@ type PackageService struct {
 type Package struct {
   gorm.Model
   Name          string            `json:"name" gorm:"size:100"`
-  Category      string            `json:"category" gorm:"size:20"`
+  Category      string            `json:"category" gorm:"size:20;default:guests"`
   Availability  bool              `json:"availability" gorm:"default:true"`
   Price         uint              `json:"price"`
   Products      []PackageProduct  `json:"products"`
