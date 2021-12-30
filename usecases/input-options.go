@@ -30,6 +30,12 @@ func ReadInputOptions(w http.ResponseWriter, r *http.Request) {
           _ = database.Table("invoices").Select(`id, CONCAT("invoice-",id) as value`).Find(&options)
        case "bill":
           _ = database.Table("bills").Select(`id, CONCAT("bill-",id) as value`).Find(&options)
+       case "pdtsupplier":
+          _ = database.Table("users").Where("user_type = ? OR user_type = ?", "supplier", "staff").Select(`id, CONCAT(firstname, " ",lastname, " - (", user_type,")") as value`).Find(&options) 
+       case "svcprovider":
+          _ = database.Table("users").Where("user_type = ? OR user_type = ?", "service-provider", "staff").Select(`id, CONCAT(firstname, " ",lastname, " - (", user_type,")") as value`).Find(&options) 
+         
+            
        case "orderitems":
           var productOptions  []InputOption
           var serviceOptions  []InputOption

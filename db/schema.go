@@ -110,8 +110,8 @@ type Payment struct {
 
 type StockTransaction struct {
   gorm.Model
-  Transaction      string   `json:"transaction" gorm:"size:8"`         //add, remove,
-  ProductCategory   string  `json:"productCategory" gorm:"size:150"`   //
+  Transaction      string   `json:"transaction" gorm:"size:8;default:add"`  //add, remove,
+  ProductCategory   string  `json:"productCategory" gorm:"size:150"`        //
   ProductID         uint    `json:"productid"`
   OldQuantity       uint    `json:"oldQuantity"`
   Quantity          uint    `json:"quantity"`

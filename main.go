@@ -36,13 +36,16 @@ func getRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/user/login", uc.UserLogin).Methods("POST")
 	router.HandleFunc("/user/register", uc.RegisteringUser).Methods("POST")
+	router.HandleFunc("/user/register/guest", uc.RegisterNewGuest).Methods("POST")
 	router.HandleFunc("/user/rights/{id}", uc.AssignUserRights).Methods("PUT")
-	router.HandleFunc("/user/read/{id}", uc.ReadUser).Methods("GET")
-	router.HandleFunc("/user/read", uc.ReadAllUsers).Methods("GET")
+	router.HandleFunc("/user/{id}", uc.ReadUser).Methods("GET")
+	router.HandleFunc("/user", uc.ReadAllUsers).Methods("GET")
 	router.HandleFunc("/customers/count", uc.ReadCountCustomers).Methods("GET")
 	router.HandleFunc("/customer", uc.ReadAllCustomers).Methods("GET")
+	router.HandleFunc("/customer/{id}", uc.ReadUser).Methods("GET")
 	router.HandleFunc("/guests/count", uc.ReadCountGuests).Methods("GET")
 	router.HandleFunc("/guest", uc.ReadAllGuests).Methods("GET")
+	router.HandleFunc("/guest/{id}", uc.ReadUser).Methods("GET")
 	
 	
 	//router.Path("/user/read").Queries("skip", "{skip}").HandlerFunc(uc.ReadAllUsers).Name("pagenation").Methods("GET")
@@ -108,9 +111,9 @@ func getRouter() *mux.Router {
 	//StockTransaction
 	router.HandleFunc("/stock/add", uc.CreateStockTransaction).Methods("POST")
 	router.HandleFunc("/stock/remove", uc.CreateStockTransaction).Methods("POST")
-	router.HandleFunc("/stock/update/{id}", uc.UpdateStockTransaction).Methods("PUT")
-	router.HandleFunc("/stock/read/{id}", uc.ReadStockTransaction).Methods("GET")
-	router.HandleFunc("/stock/transactions", uc.ReadAllStockTransactions).Methods("GET")
+	router.HandleFunc("/stock/{id}", uc.UpdateStockTransaction).Methods("PUT")
+	router.HandleFunc("/stock/{id}", uc.ReadStockTransaction).Methods("GET")
+	router.HandleFunc("/stock", uc.ReadAllStockTransactions).Methods("GET")
 	router.HandleFunc("/sales/ledger", uc.ReadStockTxnsForBarner).Methods("GET")
 	
 	

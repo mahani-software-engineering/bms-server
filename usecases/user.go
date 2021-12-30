@@ -19,6 +19,38 @@ func RegisteringUser(w http.ResponseWriter, r *http.Request) {
 	respondToClient(w, 201, user, "User registered succeffully.") 
 }
 
+type Guest struct {
+    db.User                   
+    Package db.OrderOrBooking `json:"package"`
+}
+
+func RegisterNewGuest(w http.ResponseWriter, r *http.Request) {
+	var user db.User
+	var order db.OrderOrBooking
+	var guest Guest
+	_ = json.NewDecoder(r.Body).Decode(&guest)
+	order.Item        = guest.Package.Item
+    order.ItemID      = guest.Package.ItemID
+    order.Quantity    = 1
+    order.Status      = guest.Package.Status
+    order.Paid        = guest.Package.Paid
+    order.Customer.Firstname           = guest.Firstname
+    order.Customer.Lastname            = guest.Lastname
+    order.Customer.Phone               = guest.Phone
+    order.Customer.Email               = guest.Email
+    order.Customer.Address             = guest.Address
+    order.Customer.IdentityCardNumber  = guest.IdentityCardNumber
+    order.Customer.IdentityCardType    = guest.IdentityCardType
+    order.Customer.Nationality         = guest.Nationality
+    order.Customer.Username            = guest.Username
+    order.Customer.Password            = guest.Password
+    order.Customer.AccessRights        = guest.AccessRights
+    order.Customer.UserType            = guest.UserType
+	database.Omit("Visit","VisitID","InvoiceID","BillID").Create(&order)
+	//newActionRecord(user.ID, "ACN0001", "Registered a new user", "user", (user.Firstname+" "+user.Lastname))
+	respondToClient(w, 201, user, "Guest registered succeffully.")
+}
+
 type UserRights struct {
     Username string  `json:"username"`
     Rights uint `json:"rights"`
@@ -102,23 +134,23 @@ func ReadAllUsers(w http.ResponseWriter, r *http.Request) {
     var users []db.User
     response := database.Find(&users)
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %s users", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d users", numberOfRowsFound)
     respondToClient(w, 200, users, msg)
 }
 
 func ReadAllCustomers(w http.ResponseWriter, r *http.Request) {
-    var users []db.User
-    response := database.Where("user_type = ?", "customer").Find(&users)
+    var customers []db.User
+    response := database.Where("user_type = ?", "customer").Find(&customers)
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %s customers", numberOfRowsFound)
-    respondToClient(w, 200, users, msg)
+    msg := fmt.Sprintf("Found %d customers", numberOfRowsFound)
+    respondToClient(w, 200, customers, msg)
 }
 
 func ReadCountCustomers(w http.ResponseWriter, r *http.Request) {
     var users []db.User
     response := database.Where("user_type = ?", "customer").Find(&users)
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %s customers", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d customers", numberOfRowsFound)
     respondToClient(w, 200, numberOfRowsFound, msg)
 }
 
@@ -131,7 +163,7 @@ func ReadAllGuests(w http.ResponseWriter, r *http.Request) {
     response := database.Table("users").Joins("JOIN (?) as csm on csm.customer_id=users.id", joinedTable).Select("users.*").Find(&guests)
     
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %s guests", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d guests", numberOfRowsFound)
     respondToClient(w, 200, guests, msg)
 }
 
@@ -144,7 +176,7 @@ func ReadCountGuests(w http.ResponseWriter, r *http.Request) {
     response := database.Table("users").Joins("JOIN (?) as csm on csm.customer_id=users.id", joinedTable).Select("users.*").Find(&guests)
     
     numberOfRowsFound := response.RowsAffected
-    msg := fmt.Sprintf("Found %s guests", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d guests", numberOfRowsFound)
     respondToClient(w, 200, numberOfRowsFound, msg)
 }
 
