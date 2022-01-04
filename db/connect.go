@@ -21,6 +21,7 @@ func Connect() (*gorm.DB, error) {
         return nil, err
       }
     //======= Migrate the schema ======
+    db.AutoMigrate(&Department{})
     db.AutoMigrate(&Service{})
     db.AutoMigrate(&Product{})
     db.AutoMigrate(&PackageProduct{})

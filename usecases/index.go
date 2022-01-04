@@ -37,8 +37,8 @@ func readOne(w http.ResponseWriter, r *http.Request, existsFunc func(string)(boo
 func respondToClient(w http.ResponseWriter, statusCode uint, edata interface{}, simpleMessage string){
     w.Header().Set("Content-Type","application/json")
     switch {
-        case 200 <= statusCode || statusCode < 300:
-            fmt.Println("200 <= statusCode || statusCode < 300")
+        case 200 <= statusCode && statusCode < 300:
+            fmt.Println("200 <= statusCode && statusCode < 300")
             w.WriteHeader(http.StatusOK)
             if edata != nil && simpleMessage != "" {
                 json.NewEncoder(w).Encode(struct{Message string; Data interface{}}{ Message: simpleMessage, Data:edata })
@@ -49,12 +49,16 @@ func respondToClient(w http.ResponseWriter, statusCode uint, edata interface{}, 
             }else{
                 json.NewEncoder(w).Encode(struct{Message string}{ Message: "Oops! Unexpected error occured." })
             }
-        case 400 <= statusCode || statusCode < 500:
-            fmt.Println("400 <= statusCode || statusCode < 500")
+        case statusCode == 403:
+            fmt.Println("statusCode == 403")
+            w.WriteHeader(http.StatusForbidden)
+            json.NewEncoder(w).Encode(struct{Message string}{ Message: simpleMessage })
+        case 400 <= statusCode && statusCode < 500:
+            fmt.Println("400 <= statusCode && statusCode < 500")
             w.WriteHeader(http.StatusBadRequest)
             json.NewEncoder(w).Encode(struct{Message string}{ Message: simpleMessage })
-        case 500 <= statusCode || statusCode < 600:
-            fmt.Println("500 <= statusCode || statusCode < 600")
+        case 500 <= statusCode && statusCode < 600:
+            fmt.Println("500 <= statusCode && statusCode < 600")
             w.WriteHeader(http.StatusInternalServerError)
             json.NewEncoder(w).Encode(struct{Message string}{ Message: "Server error!" })
         default: 

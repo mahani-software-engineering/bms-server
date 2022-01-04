@@ -5,15 +5,17 @@ import (
     "fmt"
     "strconv"
     "net/http"
-    //"encoding/json"
+    "encoding/json"
     "github.com/gorilla/mux"
     "github.com/mahani-software-engineering/bms-server/db"
 )
 
-
-
 func CreateProduct(w http.ResponseWriter, r *http.Request) {
-
+    var product db.Product
+    _ = json.NewDecoder(r.Body).Decode(&product)
+    database.Create(&product)
+    msg := fmt.Sprintf("New product recorded")
+    respondToClient(w, 201, product, msg)
 }
 
 func UpdateProduct(w http.ResponseWriter, r *http.Request) {

@@ -1,6 +1,5 @@
 package usecases
 
-
 import (
     "fmt"
     "strconv"
@@ -56,7 +55,7 @@ func ReadAllExpenses(w http.ResponseWriter, r *http.Request) {
     numberOfRowsFound := response.RowsAffected
     exists := numberOfRowsFound > 0
     fmt.Println(numberOfRowsFound, "expenses exist =", exists)
-    msg := fmt.Sprintf("Found %d records", numberOfRowsFound)
+    msg := fmt.Sprintf("Found %d expenses", numberOfRowsFound)
     respondToClient(w, 200, expenses, msg)
 }
 

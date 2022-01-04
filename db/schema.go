@@ -4,12 +4,18 @@ import (
   "gorm.io/gorm"
 )
 
+type Department struct {
+    gorm.Model
+    Name               string  `json:"name" gorm:"size:200"`
+}
+
 type Service struct {
   gorm.Model
   Name               string  `json:"name" gorm:"size:200"`
   Category           string  `json:"category" gorm:"size:40"`
   Availability       bool    `json:"availability" gorm:"default:true"`
   Price              uint    `json:"price"`
+  Department         uint    `json:"department" gorm:"size:20"`
   ServiceProviderID  uint    `json:"provider"`
   CreatedBy          uint    `json:"createdby"`
 }
@@ -21,11 +27,24 @@ type Product struct {
   Brand            string  `json:"brand" gorm:"size:20"`         //fanta, crest, etc
   Type             string  `json:"type" gorm:"size:20"`          //plastic, bottled, etc
   Price            uint    `json:"price"`                        //4000
+  Department       uint    `json:"department" gorm:"size:20"`
   Quantity         uint    `json:"quantity"`                     //450
   QuantityUnits    string  `json:"quantityUnits" gorm:"size:20"` //crates
   SupplierID       uint    `json:"supplierid"`
   CreatedBy        uint    `json:"createdby"`
-}  
+}
+
+type Package struct {
+  gorm.Model
+  Name          string            `json:"name" gorm:"size:100"`
+  Category      string            `json:"category" gorm:"size:20;default:guests"`
+  Availability  bool              `json:"availability" gorm:"default:true"`
+  Price         uint              `json:"price"`
+  Department    uint              `json:"department" gorm:"size:20"`
+  Products      []PackageProduct  `json:"products"`
+  Services      []PackageService  `json:"services"`
+  CreatedBy     uint              `json:"createdby"`
+} 
 
 type PackageProduct struct {
   gorm.Model
@@ -39,17 +58,6 @@ type PackageService struct {
   ServiceID   uint  `json:"serviceid"`
   PackageID   uint  `json:"packageid"`
   Quantity    uint  `json:"quantity"`
-}
-
-type Package struct {
-  gorm.Model
-  Name          string            `json:"name" gorm:"size:100"`
-  Category      string            `json:"category" gorm:"size:20;default:guests"`
-  Availability  bool              `json:"availability" gorm:"default:true"`
-  Price         uint              `json:"price"`
-  Products      []PackageProduct  `json:"products"`
-  Services      []PackageService  `json:"services"`
-  CreatedBy   uint     `json:"createdby"`
 }
 
 type Visit struct {

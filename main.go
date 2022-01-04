@@ -46,8 +46,11 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/guests/count", uc.ReadCountGuests).Methods("GET")
 	router.HandleFunc("/guest", uc.ReadAllGuests).Methods("GET")
 	router.HandleFunc("/guest/{id}", uc.ReadUser).Methods("GET")
-	
-	
+	//department
+	router.HandleFunc("/department", uc.CreateDepartment).Methods("POST")
+	router.HandleFunc("/department/{id}", uc.UpdateDepartment).Methods("PUT")
+	router.HandleFunc("/department/{id}", uc.ReadDepartment).Methods("GET")
+	router.HandleFunc("/department", uc.ReadAllDepartments).Methods("GET")
 	//router.Path("/user/read").Queries("skip", "{skip}").HandlerFunc(uc.ReadAllUsers).Name("pagenation").Methods("GET")
 	//Product
 	router.HandleFunc("/product", uc.CreateProduct).Methods("POST")
