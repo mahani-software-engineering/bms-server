@@ -151,8 +151,9 @@ type User struct {
   IdentityCardNumber string         `json:"idcardnumber" gorm:"size:20"`
   IdentityCardType   string         `json:"idtype" gorm:"default:EMPLOYEE_ID" gorm:"size:20"`
   Nationality        string         `json:"nationality" gorm:"size:50"`
+  ProfilePicture     string         `json:"profilepicture" gorm:"size:150;default:xxxxx"`
   AccessRights       uint           `json:"accessRights"`
-  CreatedBy          uint     `json:"createdby"`
+  CreatedBy          uint           `json:"createdby"`
   Invoices           []Invoice      `json:"invoices" gorm:"foreignKey:CustomerID;references:id;->"`
   Bills              []Bill         `json:"bills" gorm:"foreignKey:CustomerID;references:id;->"`
   Messages           []Message      `json:"messages" gorm:"foreignKey:UserID;references:id;->"`
@@ -171,9 +172,9 @@ type UserAction struct {
 
 type Message struct {
   gorm.Model
-  Text       string
-  Read       bool
-  UserID     uint
+  Text       string    `json:"text"`
+  Read       bool      `json:"read" gorm:"default:false"`
+  UserID     uint      `json:"userid"`
   CreatedBy   uint     `json:"createdby"`
 }
 

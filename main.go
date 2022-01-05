@@ -134,6 +134,8 @@ func getRouter() *mux.Router {
 	router.HandleFunc("/message/{id}", uc.UpdateMessage).Methods("PUT")
 	router.HandleFunc("/message/{id}", uc.ReadMessage).Methods("GET")
 	router.HandleFunc("/message", uc.ReadAllMessages).Methods("GET")
+	router.HandleFunc("/messages/{id}", uc.ReadMyMessages).Methods("GET")
+	
 	//Notification
 	router.HandleFunc("/notification", uc.CreateNotification).Methods("POST")
 	router.HandleFunc("/notification/{id}", uc.UpdateNotification).Methods("PUT")
