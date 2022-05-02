@@ -124,7 +124,7 @@ func ReadUser(w http.ResponseWriter, r *http.Request) {
     }
     
     if !ok {
-        respondToClient(w, 404, nil, "Specified payment record not found")
+        respondToClient(w, 404, nil, "Specified User not found")
     }
     
     respondToClient(w, 200, user, "")
